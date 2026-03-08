@@ -395,74 +395,7 @@ spec:
 headers (`traceparent`, `tracestate`). Ensure your backend services also propagate
 these headers to maintain end-to-end traces.
 
-### Step 5: Complete EnvoyProxy with All Telemetry
-
-Here is a full example combining access logging, metrics, and tracing:
-
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: EnvoyProxy
-metadata:
-  name: full-observability
-  namespace: envoy-gateway-system
-spec:
-  telemetry:
-    accessLog:
-      settings:
-        - format:
-            type: JSON
-            json:
-              start_time: "%START_TIME%"
-              method: "%REQ(:METHOD)%"
-              path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
-              protocol: "%PROTOCOL%"
-              response_code: "%RESPONSE_CODE%"
-              response_flags: "%RESPONSE_FLAGS%"
-              bytes_received: "%BYTES_RECEIVED%"
-              bytes_sent: "%BYTES_SENT%"
-              duration: "%DURATION%"
-              upstream_host: "%UPSTREAM_HOST%"
-              request_id: "%REQ(X-REQUEST-ID)%"
-          sinks:
-            - type: File
-              file:
-                path: /dev/stdout
-            - type: OpenTelemetry
-              openTelemetry:
-                host: otel-collector.monitoring.svc.cluster.local
-                port: 4317
-                resources:
-                  k8s.cluster.name: "my-cluster"  # TODO: set your cluster name
-    metrics:
-      prometheus:
-        disable: false
-      sinks:
-        - type: OpenTelemetry
-          openTelemetry:
-            host: otel-collector.monitoring.svc.cluster.local
-            port: 4317
-    tracing:
-      samplingRate: 5  # TODO: tune for production (1-10%) vs. staging (100%)
-      provider:
-        type: OpenTelemetry
-        backendRefs:
-          - name: otel-collector
-            namespace: monitoring
-            port: 4317
-      customTags:
-        "k8s.pod.name":
-          type: Environment
-          environment:
-            name: ENVOY_POD_NAME
-            defaultValue: "-"
-        "k8s.namespace.name":
-          type: Environment
-          environment:
-            name: ENVOY_POD_NAMESPACE
-            defaultValue: "envoy-gateway-system"
-```
-
-### Step 6: Envoy Gateway Controller Logging
+### Step 5: Envoy Gateway Controller Logging
 
 To configure logging for the Envoy Gateway control plane itself, update the
 EnvoyGateway configuration ConfigMap:
@@ -507,7 +440,7 @@ After updating the ConfigMap, restart the controller:
 kubectl rollout restart deployment envoy-gateway -n envoy-gateway-system
 ```
 
-### Step 7: Proxy Debug Logging
+### Step 6: Proxy Debug Logging
 
 To enable debug logging on specific Envoy Proxy components for troubleshooting,
 use the EnvoyProxy resource:

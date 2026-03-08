@@ -272,23 +272,20 @@ spec:
 #### Header-based routing (X-Tenant-ID)
 
 ```yaml
-# Per-tenant HTTPRoute matching on header
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: tenant-acme-route
   namespace: tenant-acme  # TODO: Replace with tenant namespace
-  labels:
-    tenant: acme
 spec:
   parentRefs:
     - name: multi-tenant-gw
-      namespace: gateway-system  # TODO: Replace with gateway namespace
+      namespace: gateway-system  # TODO: Replace
   rules:
     - matches:
         - headers:
             - name: X-Tenant-ID  # TODO: Replace with your tenant header
-              value: acme         # TODO: Replace with tenant identifier
+              value: acme
       backendRefs:
         - name: acme-app  # TODO: Replace with tenant backend service
           port: 8080
@@ -363,33 +360,7 @@ Note: A SecurityPolicy on a tenant's HTTPRoute overrides the Gateway-level polic
 
 Use the `/eg-rate-limit` skill to configure rate limits. For per-tenant rate limits, attach BackendTrafficPolicy to each tenant's HTTPRoute.
 
-#### Same rate limit for all tenants
-
-Attach to the Gateway so all routes inherit it:
-
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: BackendTrafficPolicy
-metadata:
-  name: baseline-rate-limit
-  namespace: gateway-system  # TODO: Replace with gateway namespace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: multi-tenant-gw
-  rateLimit:
-    type: Local
-    local:
-      rules:
-        - limit:
-            requests: 100
-            unit: Second
-```
-
-#### Tiered rate limits per tenant
-
-Attach different BackendTrafficPolicy to each tenant's HTTPRoute:
+For a uniform rate limit across all tenants, attach a BackendTrafficPolicy to the Gateway (see `/eg-rate-limit`). For per-tenant rate limits, attach BackendTrafficPolicy to each tenant's HTTPRoute:
 
 ```yaml
 # Premium tenant: higher rate limit

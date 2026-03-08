@@ -20,45 +20,19 @@ Before generating any configuration, ask the user these questions. Skip question
    - Multi-cluster (separate ingress per cluster, or shared control plane)
    - Hybrid (some workloads on-prem, some in cloud)
 
-2. **Compliance**: What compliance requirements apply?
-   - SOC2
-   - PCI-DSS (requires strict TLS, audit logging, access control)
-   - HIPAA (requires encryption in transit and at rest, audit trails)
-   - FedRAMP
-   - None / internal standards only
+2. **Compliance**: SOC2, PCI-DSS, HIPAA, FedRAMP, or internal standards only?
 
-3. **PKI infrastructure**: Do you have an existing PKI or certificate infrastructure?
-   - cert-manager already installed (which issuer: Let's Encrypt, Vault, AWS ACM, self-managed CA)
-   - No cert-manager, need to set it up
-   - Manual certificate management (existing process to provide certs)
+3. **PKI infrastructure**: cert-manager already installed (which issuer?), need to set it up, or manual certificate management?
 
-4. **Observability stack**: What observability stack do you use?
-   - Prometheus + Grafana
-   - Datadog
-   - OpenTelemetry Collector (to a backend like Jaeger, Tempo, or cloud provider)
-   - Cloud-native (AWS CloudWatch, GCP Cloud Monitoring, Azure Monitor)
-   - Other (describe)
+4. **Observability stack**: Prometheus+Grafana, Datadog, OpenTelemetry Collector, cloud-native, or other?
 
-5. **GitOps**: What GitOps tool do you use?
-   - ArgoCD
-   - Flux
-   - None (manual kubectl apply or CI/CD pipeline)
+5. **GitOps**: ArgoCD, Flux, or none (manual kubectl/CI pipeline)?
 
-6. **Backend mTLS**: Do you need mutual TLS (mTLS) between the gateway and backends?
-   - Yes, with an existing service mesh CA (Istio, Linkerd)
-   - Yes, with cert-manager-issued certificates
-   - No, backends are trusted within the cluster network
+6. **Backend mTLS**: Needed with mesh CA, cert-manager, or not needed?
 
-7. **Traffic volume**: What is your expected peak traffic?
-   - Low (< 1,000 rps) -- single replica may suffice for dev/staging
-   - Medium (1,000 - 10,000 rps) -- 2-3 replicas with HPA
-   - High (10,000 - 100,000 rps) -- dedicated node pool, tuned connection limits
-   - Very high (100,000+ rps) -- requires careful resource planning, multiple Gateways
+7. **Traffic volume**: Low (<1K rps), Medium (1-10K rps), High (10-100K rps), or Very High (100K+ rps)?
 
-8. **WAF**: Do you need WAF capabilities?
-   - Yes, via ExtAuth (integrate with existing WAF)
-   - Yes, via Wasm (e.g., Coraza WAF)
-   - No
+8. **WAF**: Needed via ExtAuth, Wasm (e.g., Coraza), or not needed?
 
 ## Workflow
 
@@ -97,38 +71,7 @@ helm install eg oci://docker.io/envoyproxy/gateway-helm \
   -f values-production.yaml
 ```
 
-If cert-manager is not already installed, install it now:
-
-```bash
-helm repo add jetstack https://charts.jetstack.io --force-update
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --set crds.enabled=true \
-  --version v1.17.1  # TODO: Pin to latest stable
-```
-
-Configure a production-grade ClusterIssuer:
-
-```yaml
-# Let's Encrypt production issuer
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: platform-team@example.com  # TODO: Replace with your email
-    privateKeySecretRef:
-      name: letsencrypt-prod-key
-    solvers:
-      - http01:
-          gatewayHTTPRoute:
-            parentRefs:
-              - name: production-gw       # TODO: Replace with your Gateway name
-                namespace: gateway-system  # TODO: Replace with your Gateway namespace
-```
+If cert-manager is not already installed, use the `/eg-tls` skill to install it and configure a production ClusterIssuer (Let's Encrypt recommended).
 
 ### Phase 2: Gateway with HTTPS and EnvoyProxy Customization
 
@@ -173,70 +116,7 @@ spec:
   # Telemetry is configured in Phase 7
 ```
 
-Create the Gateway with HTTPS listener:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: eg
-spec:
-  controllerName: gateway.envoyproxy.io/gatewayclass-controller
-  parametersRef:
-    group: gateway.envoyproxy.io
-    kind: EnvoyProxy
-    name: production-proxy
-    namespace: envoy-gateway-system
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: production-gw
-  namespace: gateway-system              # TODO: Replace with your namespace
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  gatewayClassName: eg
-  listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: All
-    - name: https
-      protocol: HTTPS
-      port: 443
-      hostname: "*.example.com"          # TODO: Replace with your domain
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: wildcard-tls           # TODO: cert-manager creates this
-      allowedRoutes:
-        namespaces:
-          from: All
-```
-
-Create an HTTP-to-HTTPS redirect route:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: https-redirect
-  namespace: gateway-system  # TODO: Replace
-spec:
-  parentRefs:
-    - name: production-gw
-      sectionName: http
-  rules:
-    - filters:
-        - type: RequestRedirect
-          requestRedirect:
-            scheme: https
-            statusCode: 301
-```
+Use the `/eg-gateway` skill to create the GatewayClass (with `parametersRef` pointing to the `production-proxy` EnvoyProxy above) and Gateway with HTTP + HTTPS listeners. Use the `/eg-tls` skill for TLS termination and HTTP-to-HTTPS redirect.
 
 ### Phase 3: Security Hardening
 
@@ -308,256 +188,36 @@ spec:
 
 #### 3c: Authentication (EGTM-023)
 
-Use the `/eg-auth` skill. Configure JWT/OIDC authentication (never Basic Auth in production):
+Use the `/eg-auth` skill. Key requirements:
+- Configure JWT/OIDC authentication -- never use Basic Auth in production (EGTM-023)
+- Set `audiences` to prevent token confusion attacks
+- Set `authorization.defaultAction: Deny` with explicit allow rules
 
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: SecurityPolicy
-metadata:
-  name: production-auth
-  namespace: gateway-system  # TODO: Replace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: production-gw
-  jwt:
-    providers:
-      - name: primary-idp
-        issuer: "https://auth.example.com"           # TODO: Replace
-        audiences:
-          - "https://api.example.com"                 # TODO: Set audiences to prevent token confusion
-        remoteJWKS:
-          uri: "https://auth.example.com/.well-known/jwks.json"  # TODO: Replace
-  authorization:
-    defaultAction: Deny
-    rules:
-      - name: allow-authenticated
-        action: Allow
-        principal:
-          jwt:
-            provider: primary-idp
-```
+#### 3d: IP Allowlisting and CORS
 
-#### 3d: IP Allowlisting (where appropriate)
-
-For admin or internal-only routes:
-
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: SecurityPolicy
-metadata:
-  name: admin-ip-restrict
-  namespace: gateway-system  # TODO: Replace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: admin-route  # TODO: Replace with your admin route
-  authorization:
-    defaultAction: Deny
-    rules:
-      - name: allow-internal
-        action: Allow
-        principal:
-          clientCIDRs:
-            - 10.0.0.0/8       # TODO: Replace with your internal CIDR ranges
-            - 192.168.0.0/16
-```
-
-#### 3e: CORS Configuration
-
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: SecurityPolicy
-metadata:
-  name: production-cors
-  namespace: gateway-system  # TODO: Replace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: production-gw
-  cors:
-    allowOrigins:
-      - "https://app.example.com"    # TODO: Replace with your allowed origins
-    allowMethods:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - OPTIONS
-    allowHeaders:
-      - Authorization
-      - Content-Type
-      - X-Request-ID
-    exposeHeaders:
-      - X-Request-ID
-    maxAge: 86400s
-```
+Use the `/eg-auth` skill for IP allowlisting on admin/internal routes (restrict by `clientCIDRs`) and CORS configuration (set explicit `allowOrigins`, never use wildcard `*` in production).
 
 ### Phase 4: Traffic Resilience
 
-Use the `/eg-backend-policy` skill to configure backend resilience.
+Use the `/eg-backend-policy` skill to configure backend resilience. Recommended production settings:
 
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: BackendTrafficPolicy
-metadata:
-  name: production-backend-policy
-  namespace: gateway-system  # TODO: Replace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: production-gw
-  # Health checks -- detect and remove unhealthy backends
-  healthCheck:
-    active:
-      type: HTTP
-      http:
-        path: /healthz             # TODO: Replace with your health check endpoint
-        expectedStatuses:
-          - 200
-      interval: 10s
-      timeout: 5s
-      unhealthyThreshold: 3
-      healthyThreshold: 2
-  # Circuit breaking -- prevent cascade failures
-  circuitBreaker:
-    maxConnections: 1024           # TODO: Adjust based on expected load
-    maxPendingRequests: 1024
-    maxRequests: 1024
-    maxRetries: 3
-  # Retries -- automatically retry transient failures
-  retry:
-    numRetries: 2
-    retryOn:
-      - connect-failure
-      - refused-stream
-      - unavailable
-      - cancelled
-      - retriable-status-codes
-    retriableStatusCodes:
-      - 503
-    perRetry:
-      timeout: 2s
-      backOff:
-        baseInterval: 100ms
-        maxInterval: 1s
-  # Timeouts
-  timeout:
-    http:
-      connectionIdleTimeout: 60s
-      maxConnectionDuration: 300s
-  # Load balancing
-  loadBalancer:
-    type: LeastRequest              # Better distribution than RoundRobin under variable load
-  # TCP keepalive for backend connections
-  tcpKeepalive:
-    probes: 3
-    idleTime: 60s
-    interval: 10s
-```
+| Setting | Recommended Value | Notes |
+|---------|-------------------|-------|
+| Active health check | HTTP `/healthz`, interval 10s, unhealthy threshold 3 | Detect and remove unhealthy backends |
+| Circuit breaker | maxConnections: 1024, maxRequests: 1024 | Prevent cascade failures |
+| Retries | numRetries: 2, retryOn: connect-failure, refused-stream, 503 | With backoff (100ms base, 1s max) |
+| Timeouts | connectionIdleTimeout: 60s, maxConnectionDuration: 300s | Adjust per service SLA |
+| Load balancer | LeastRequest | Better than RoundRobin under variable load |
+| TCP keepalive | probes: 3, idleTime: 60s, interval: 10s | Keep backend connections alive |
 
 ### Phase 5: Rate Limiting (EGTM-018)
 
-Use the `/eg-rate-limit` skill to configure DoS protection.
+Use the `/eg-rate-limit` skill to configure DoS protection. For production, apply both:
 
-For production, use global rate limiting with Redis for consistent limits across all Envoy replicas:
+- **Global rate limits** (requires Redis): Consistent limits across all Envoy replicas for business-level quotas. Use the `/eg-rate-limit` skill to deploy Redis and configure global BackendTrafficPolicy with `rateLimit.type: Global`.
+- **Local rate limits**: Per-replica limits as defense-in-depth. Protect individual Envoy instances from being overwhelmed.
 
-```yaml
-# Redis deployment for global rate limiting
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-rate-limit
-  namespace: envoy-gateway-system
-spec:
-  replicas: 1  # TODO: Use Redis Sentinel or Cluster for HA in production
-  selector:
-    matchLabels:
-      app: redis-rate-limit
-  template:
-    metadata:
-      labels:
-        app: redis-rate-limit
-    spec:
-      containers:
-        - name: redis
-          image: redis:7-alpine
-          ports:
-            - containerPort: 6379
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-rate-limit
-  namespace: envoy-gateway-system
-spec:
-  selector:
-    app: redis-rate-limit
-  ports:
-    - port: 6379
-      targetPort: 6379
-```
-
-Configure the global rate limit in BackendTrafficPolicy:
-
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: BackendTrafficPolicy
-metadata:
-  name: global-rate-limit
-  namespace: gateway-system  # TODO: Replace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: production-gw
-  rateLimit:
-    type: Global
-    global:
-      rules:
-        - clientSelectors:
-            - headers:
-                - name: ":path"
-                  type: Distinct      # Rate limit per unique path
-          limit:
-            requests: 100             # TODO: Adjust based on expected traffic
-            unit: Second
-```
-
-Also add local rate limits as a defense-in-depth measure:
-
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: BackendTrafficPolicy
-metadata:
-  name: local-rate-limit
-  namespace: gateway-system  # TODO: Replace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: production-gw
-  rateLimit:
-    type: Local
-    local:
-      rules:
-        - limit:
-            requests: 1000            # TODO: Adjust -- per Envoy replica limit
-            unit: Second
-```
-
-Note: Both local and global rate limits can be applied simultaneously. Local limits protect individual Envoy instances from being overwhelmed, while global limits enforce business-level quotas.
+Both can be applied simultaneously to the same Gateway.
 
 ### Phase 6: Client Policies
 
@@ -595,261 +255,43 @@ spec:
 
 ### Phase 7: Observability
 
-Use the `/eg-observability` skill to configure comprehensive telemetry.
+Use the `/eg-observability` skill to add telemetry to the `production-proxy` EnvoyProxy resource from Phase 2. Add a `spec.telemetry` section with:
 
-Update the EnvoyProxy resource from Phase 2 to include telemetry configuration:
+- **Access logging**: JSON format to stdout with fields: start_time, method, path, response_code, response_flags, duration, upstream_host, request_id, x_forwarded_for, user_agent, authority. Add OTel sink if using OpenTelemetry.
+- **Metrics**: Enable `enableVirtualHostStats: true`. Add OpenTelemetry sink to your OTel collector.
+- **Tracing**: OpenTelemetry provider, `samplingRate: 5` for production (100 for staging). Add custom tags for environment and pod metadata.
 
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: EnvoyProxy
-metadata:
-  name: production-proxy
-  namespace: envoy-gateway-system
-spec:
-  provider:
-    type: Kubernetes
-    kubernetes:
-      envoyDeployment:
-        replicas: 3
-        container:
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: "2"
-              memory: 2Gi
-        pod:
-          annotations:
-            prometheus.io/scrape: "true"
-            prometheus.io/port: "19001"
-      envoyHpa:
-        minReplicas: 3
-        maxReplicas: 10
-        metrics:
-          - type: Resource
-            resource:
-              name: cpu
-              target:
-                type: Utilization
-                averageUtilization: 60
-  telemetry:
-    # Structured access logging
-    accessLog:
-      settings:
-        - format:
-            type: JSON
-            json:
-              start_time: "%START_TIME%"
-              method: "%REQ(:METHOD)%"
-              path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
-              protocol: "%PROTOCOL%"
-              response_code: "%RESPONSE_CODE%"
-              response_flags: "%RESPONSE_FLAGS%"
-              bytes_received: "%BYTES_RECEIVED%"
-              bytes_sent: "%BYTES_SENT%"
-              duration: "%DURATION%"
-              upstream_service_time: "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"
-              upstream_host: "%UPSTREAM_HOST%"
-              upstream_cluster: "%UPSTREAM_CLUSTER%"
-              x_forwarded_for: "%REQ(X-FORWARDED-FOR)%"
-              request_id: "%REQ(X-REQUEST-ID)%"
-              user_agent: "%REQ(USER-AGENT)%"
-              authority: "%REQ(:AUTHORITY)%"
-          sinks:
-            - type: File
-              file:
-                path: /dev/stdout
-            # TODO: Uncomment for OpenTelemetry log export
-            # - type: OpenTelemetry
-            #   openTelemetry:
-            #     host: otel-collector.observability.svc.cluster.local
-            #     port: 4317
-    # Prometheus metrics
-    metrics:
-      sinks:
-        - type: OpenTelemetry
-          openTelemetry:
-            host: otel-collector.observability.svc.cluster.local  # TODO: Replace
-            port: 4317
-      enableVirtualHostStats: true
-      matches:
-        - type: Prefix
-          value: ""                # Export all metrics
-    # Distributed tracing
-    tracing:
-      provider:
-        host: otel-collector.observability.svc.cluster.local  # TODO: Replace
-        port: 4317
-        type: OpenTelemetry
-      samplingRate: 5              # TODO: 1-10% for production, 100% for staging
-      customTags:
-        environment:
-          type: Literal
-          literal:
-            value: production      # TODO: Replace with your environment
-```
-
-#### Prometheus Alerting Rules
-
-Provide recommended alert rules for the user's monitoring stack:
-
-```yaml
-# PrometheusRule for Envoy Gateway alerts
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: envoy-gateway-alerts
-  namespace: monitoring  # TODO: Replace with your monitoring namespace
-spec:
-  groups:
-    - name: envoy-gateway
-      rules:
-        - alert: HighErrorRate
-          expr: |
-            sum(rate(envoy_http_downstream_rq_xx{envoy_response_code_class="5"}[5m]))
-            / sum(rate(envoy_http_downstream_rq_total[5m])) > 0.05
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "Envoy Gateway 5xx error rate above 5%"
-        - alert: HighLatency
-          expr: |
-            histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le))
-            > 5000
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Envoy Gateway p99 latency above 5 seconds"
-        - alert: HighConnectionCount
-          expr: envoy_http_downstream_cx_active > 9000
-          for: 2m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Envoy Gateway active connections approaching limit"
-```
+Recommended Prometheus alerts to configure:
+- **HighErrorRate** (critical): 5xx rate > 5% over 5m. Expr: `sum(rate(envoy_http_downstream_rq_xx{envoy_response_code_class="5"}[5m])) / sum(rate(envoy_http_downstream_rq_total[5m])) > 0.05`
+- **HighLatency** (warning): p99 latency > 5s. Expr: `histogram_quantile(0.99, sum(rate(envoy_http_downstream_rq_time_bucket[5m])) by (le)) > 5000`
+- **HighConnectionCount** (warning): Active connections approaching limit. Expr: `envoy_http_downstream_cx_active > 9000`
 
 ### Phase 8: Operations
 
 #### 8a: GitOps Manifests
 
-Organize manifests for GitOps. Recommend this directory structure:
-
-```
-infrastructure/
-  envoy-gateway/
-    namespace.yaml
-    helm-release.yaml          # Or ArgoCD Application / Flux HelmRelease
-    envoy-proxy.yaml           # EnvoyProxy customization
-    gateway-class.yaml
-apps/
-  gateway-system/
-    gateway.yaml
-    client-traffic-policy.yaml
-    security-policy.yaml
-    backend-traffic-policy.yaml
-  app-namespace/
-    httproute.yaml
-    security-policy.yaml       # Route-level overrides
-```
-
-For ArgoCD:
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: envoy-gateway
-  namespace: argocd
-spec:
-  project: infrastructure
-  source:
-    repoURL: https://github.com/your-org/your-repo  # TODO: Replace
-    path: infrastructure/envoy-gateway
-    targetRevision: main
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: envoy-gateway-system
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - ServerSideApply=true  # Required for CRDs
-```
+Organize manifests: `infrastructure/envoy-gateway/` for controller-level resources (namespace, Helm release, EnvoyProxy, GatewayClass) and `apps/gateway-system/` for application-level resources (Gateway, policies, routes). Use ArgoCD or Flux with `ServerSideApply=true` for CRD management.
 
 #### 8b: Upgrade Strategy
 
-Document the upgrade procedure:
-
-1. Review release notes for the target Envoy Gateway version
-2. Update CRDs first (if managing separately):
-   ```bash
-   helm template eg oci://docker.io/envoyproxy/gateway-crds-helm \
-     --version <new-version> \
-     | kubectl apply --server-side -f -
-   ```
-3. Upgrade the controller:
-   ```bash
-   helm upgrade eg oci://docker.io/envoyproxy/gateway-helm \
-     --version <new-version> \
-     -n envoy-gateway-system \
-     -f values-production.yaml
-   ```
-4. Monitor controller logs and Gateway status during rollout
-5. Verify all Gateways show `Programmed: True` after upgrade
+1. Review release notes for the target version
+2. Update CRDs: `helm template eg oci://docker.io/envoyproxy/gateway-crds-helm --version <new-version> | kubectl apply --server-side -f -`
+3. Upgrade controller: `helm upgrade eg oci://docker.io/envoyproxy/gateway-helm --version <new-version> -n envoy-gateway-system -f values-production.yaml`
+4. Verify all Gateways show `Programmed: True` after upgrade
 
 #### 8c: Verification Commands
 
-Provide a comprehensive verification checklist:
-
 ```bash
-# 1. Controller health
-kubectl get deployment envoy-gateway -n envoy-gateway-system
-kubectl get pods -n envoy-gateway-system
-
-# 2. GatewayClass accepted
 kubectl get gatewayclass eg -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}'
-
-# 3. Gateway programmed
 kubectl describe gateway production-gw -n gateway-system
-
-# 4. Envoy Proxy replicas
-kubectl get deployment -l gateway.envoyproxy.io/owning-gateway-name=production-gw -n envoy-gateway-system
-
-# 5. TLS certificate valid
-kubectl get secret wildcard-tls -n gateway-system -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -dates
-
-# 6. Policy status
-kubectl get securitypolicy -A -o wide
-kubectl get backendtrafficpolicy -A -o wide
-kubectl get clienttrafficpolicy -A -o wide
-
-# 7. End-to-end test
+kubectl get securitypolicy,backendtrafficpolicy,clienttrafficpolicy -A -o wide
 export GATEWAY_HOST=$(kubectl get gateway production-gw -n gateway-system -o jsonpath='{.status.addresses[0].value}')
 curl -v https://app.example.com --resolve "app.example.com:443:$GATEWAY_HOST"
 ```
 
 ## Output Requirements
 
-Generate a complete, production-ready set of Kubernetes manifests in this order:
-
-1. Helm install command with production values file
-2. cert-manager ClusterIssuer (if needed)
-3. EnvoyProxy resource with scaling, resources, and telemetry
-4. GatewayClass with parametersRef to EnvoyProxy
-5. Gateway with HTTP + HTTPS listeners
-6. HTTP-to-HTTPS redirect HTTPRoute
-7. Application HTTPRoutes
-8. ClientTrafficPolicy (TLS hardening, path normalization, connection limits)
-9. SecurityPolicy (authentication, authorization, CORS)
-10. BackendTrafficPolicy (health checks, circuit breaking, retries, rate limits)
-11. Observability (access logging, metrics, tracing, alerting rules)
-12. GitOps structure and ArgoCD/Flux manifests (if applicable)
-13. Verification commands
+Generate production-ready manifests in order: Helm install, cert-manager (if needed), EnvoyProxy, GatewayClass, Gateway, HTTP-to-HTTPS redirect, HTTPRoutes, ClientTrafficPolicy, SecurityPolicy, BackendTrafficPolicy, observability, GitOps manifests, and verification commands.
 
 ## Guidelines
 
