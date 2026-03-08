@@ -8,16 +8,16 @@ Agent skills that help developers adopt and contribute to the Envoy ecosystem. I
 
 ```bash
 # Install all Envoy Gateway adopter skills
-npx skills add envoyproxy/envoy-skills
+npx skills add missBerg/envoy-skills
 
 # Preview available skills first
-npx skills add envoyproxy/envoy-skills --list
+npx skills add missBerg/envoy-skills --list
 
 # Install a specific skill
-npx skills add envoyproxy/envoy-skills --skill eg-install
+npx skills add missBerg/envoy-skills --skill eg-install
 
 # Install to a specific agent
-npx skills add envoyproxy/envoy-skills -a cursor
+npx skills add missBerg/envoy-skills -a cursor
 ```
 
 ### Via install script
@@ -77,6 +77,13 @@ Each project separates skills by audience:
 | `/eg-extend` | Build custom data plane extensions |
 | `/eg-service-mesh` | Integration with Istio or Cilium |
 
+### Version and Migration Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `/eg-version` | Version compatibility matrix, upgrade readiness checks |
+| `/eg-migrate` | Step-by-step migration between Envoy Gateway versions |
+
 ### Reference Skills (best practices and context)
 
 | Skill | Topic |
@@ -94,6 +101,41 @@ These skills are built from:
 - [envoyproxy/gateway](https://github.com/envoyproxy/gateway) source code
 - [envoyproxy/envoy](https://github.com/envoyproxy/envoy) source code
 - Community discussions, Q&A, and real-world deployment patterns
+
+## Target Version
+
+Skills currently target **Envoy Gateway v1.7.0** (Gateway API v1.4.1). Version information is centralized in `versions.yaml`.
+
+## Testing
+
+### Validate skill format and version consistency
+
+```bash
+tests/validate-skills.sh
+```
+
+### Extract and inspect YAML from skills
+
+```bash
+tests/extract-yaml.sh gateway/adopters/skills/eg-install/SKILL.md
+```
+
+### Run E2E tests in a kind cluster
+
+```bash
+# Set up kind cluster with Envoy Gateway
+tests/setup-cluster.sh
+
+# Run tests
+tests/e2e/test-core.sh
+tests/e2e/test-policies.sh
+tests/e2e/test-dry-run.sh
+
+# Clean up
+tests/setup-cluster.sh --cleanup
+```
+
+Requires: [kind](https://kind.sigs.k8s.io/), [kubectl](https://kubernetes.io/docs/tasks/tools/), [helm](https://helm.sh/)
 
 ## Contributing
 

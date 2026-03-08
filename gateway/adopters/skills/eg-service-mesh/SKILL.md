@@ -74,7 +74,7 @@ Use the `/eg-install` skill to install Envoy Gateway:
 
 ```bash
 helm install eg oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.3.0 \
+  --version v1.7.0 \
   -n envoy-gateway-system \
   --create-namespace
 ```
@@ -383,7 +383,7 @@ Important: Do not configure retries in both Envoy Gateway and Istio for the same
 
 #### Native Service Mesh Integration
 
-As of Envoy Gateway v1.3.0, there is no native service mesh integration feature. The integration patterns described here use standard Kubernetes networking and Gateway API resources. For updates on native integration, see GitHub issue #7500 in the Envoy Gateway repository.
+As of Envoy Gateway v1.7.0, there is no native service mesh integration feature. The integration patterns described here use standard Kubernetes networking and Gateway API resources. For updates on native integration, see GitHub issue #7500 in the Envoy Gateway repository.
 
 Istio ambient mode provides the best integration path because:
 - No sidecar injection conflicts
@@ -410,7 +410,7 @@ Envoy Gateway works alongside Cilium as the CNI. If Cilium is providing LoadBala
 
 ```bash
 helm install eg oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.3.0 \
+  --version v1.7.0 \
   -n envoy-gateway-system \
   --create-namespace
 ```
@@ -549,7 +549,7 @@ Generate a complete set of Kubernetes manifests for the chosen integration:
 
 ## Guidelines
 
-- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.3.0`).
+- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.7.0`).
 - Use `gateway.networking.k8s.io/v1` for Gateway API resources and `gateway.envoyproxy.io/v1alpha1` for Envoy Gateway extension CRDs.
 - Use kebab-case for all resource names.
 - Include TODO comments in YAML for values the user must customize.

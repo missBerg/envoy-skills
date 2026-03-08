@@ -109,7 +109,7 @@ After generating manifests, provide a verification section with kubectl commands
 
 ## Guidelines
 
-- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.3.0`).
+- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.7.0`).
 - Use `gateway.networking.k8s.io/v1` for Gateway API resources and `gateway.envoyproxy.io/v1alpha1` for Envoy Gateway extension CRDs.
 - Use kebab-case for all resource names.
 - Include comments in YAML with TODO markers for values the user must customize.

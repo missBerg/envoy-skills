@@ -62,8 +62,30 @@ Required frontmatter: `name` and `description` only. The `name` must match the p
 2. Add YAML frontmatter with `name` and `description`
 3. Write the skill body (keep under 500 lines; use references/ for longer content)
 4. Verify correct apiVersions: `gateway.networking.k8s.io/v1` for Gateway API, `gateway.envoyproxy.io/v1alpha1` for EG CRDs
-5. Include TODO comments for user-customizable values
-6. End with a validation checklist
+5. Use the EG version from `versions.yaml` (currently v1.7.0) — never hardcode without checking
+6. Include TODO comments for user-customizable values
+7. End with a validation checklist
+8. Run `tests/validate-skills.sh` to check format and version consistency
+9. Run `tests/extract-yaml.sh` on your skill to verify YAML extracts correctly
+
+## Testing
+
+Version configuration is centralized in `versions.yaml` at the repo root. All version references in skills should match `latest_stable` from that file.
+
+```bash
+# Validate all skills (format, naming, versions)
+tests/validate-skills.sh
+
+# Extract YAML from a specific skill
+tests/extract-yaml.sh gateway/adopters/skills/<name>/SKILL.md
+
+# Full E2E test (requires kind, kubectl, helm)
+tests/setup-cluster.sh
+tests/e2e/test-core.sh
+tests/e2e/test-policies.sh
+tests/e2e/test-dry-run.sh
+tests/setup-cluster.sh --cleanup
+```
 
 ## Key References
 

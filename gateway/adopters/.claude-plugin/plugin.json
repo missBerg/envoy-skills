@@ -7,7 +7,7 @@
     "url": "https://github.com/envoyproxy/gateway"
   },
   "homepage": "https://gateway.envoyproxy.io/",
-  "repository": "https://github.com/envoyproxy/envoy-skills",
+  "repository": "https://github.com/missBerg/envoy-skills",
   "license": "Apache-2.0",
   "keywords": [
     "envoy",

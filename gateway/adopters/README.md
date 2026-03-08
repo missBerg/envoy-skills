@@ -6,7 +6,7 @@ Skills for developers deploying and operating Envoy Gateway.
 
 ```bash
 # Via skills.sh
-npx skills add envoyproxy/envoy-skills
+npx skills add missBerg/envoy-skills
 
 # Or copy directly
 cp -r skills/* /path/to/your-project/.claude/skills/

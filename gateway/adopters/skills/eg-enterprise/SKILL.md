@@ -79,7 +79,7 @@ deployment:
         cpu: 500m
         memory: 1024Mi
     image:
-      tag: v1.3.0                  # TODO: Pin to your target version
+      tag: v1.7.0                  # TODO: Pin to your target version
 podDisruptionBudget:
   maxUnavailable: 1
 config:
@@ -91,7 +91,7 @@ config:
 
 ```bash
 helm install eg oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.3.0 \
+  --version v1.7.0 \
   -n envoy-gateway-system \
   --create-namespace \
   -f values-production.yaml
@@ -853,7 +853,7 @@ Generate a complete, production-ready set of Kubernetes manifests in this order:
 
 ## Guidelines
 
-- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.3.0`).
+- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.7.0`).
 - Use `gateway.networking.k8s.io/v1` for Gateway API resources and `gateway.envoyproxy.io/v1alpha1` for Envoy Gateway extension CRDs.
 - Use kebab-case for all resource names.
 - Include TODO comments in YAML for values the user must customize.

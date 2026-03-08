@@ -78,7 +78,7 @@ Best for: regulated environments, premium tenants requiring SLA guarantees, comp
 ```bash
 # Install a dedicated controller for tenant "acme"
 helm install eg-acme oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.3.0 \
+  --version v1.7.0 \
   -n tenant-acme \
   --create-namespace \
   --set config.envoyGateway.gateway.controllerName=gateway.envoyproxy.io/acme-controller
@@ -520,7 +520,7 @@ Generate a complete set of Kubernetes manifests organized by concern:
 
 ## Guidelines
 
-- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.3.0`).
+- Always pin the Envoy Gateway Helm chart version explicitly (default: `v1.7.0`).
 - Use `gateway.networking.k8s.io/v1` for Gateway API resources and `gateway.envoyproxy.io/v1alpha1` for Envoy Gateway extension CRDs.
 - Use kebab-case for all resource names. Include the tenant name in resource names for clarity (e.g., `tenant-acme-route`).
 - Include TODO comments in YAML for values the user must customize.

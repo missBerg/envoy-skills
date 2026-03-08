@@ -1,0 +1,48 @@
+name: Check for New EG Releases
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly on Monday at 9am UTC
+  workflow_dispatch:       # Allow manual trigger
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check latest Envoy Gateway release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST=$(gh api repos/envoyproxy/gateway/releases/latest --jq '.tag_name')
+          CURRENT=$(grep 'latest_stable:' versions.yaml | head -1 | awk '{print $2}' | tr -d '"')
+
+          echo "Latest EG release: $LATEST"
+          echo "Current in repo:   $CURRENT"
+
+          if [ "$LATEST" != "$CURRENT" ]; then
+            echo "::warning::New Envoy Gateway release available: $LATEST (skills target: $CURRENT)"
+
+            # Check if an issue already exists
+            EXISTING=$(gh issue list --search "Update skills to $LATEST" --json number --jq 'length')
+            if [ "$EXISTING" = "0" ]; then
+              gh issue create \
+                --title "Update skills to Envoy Gateway $LATEST" \
+                --body "A new Envoy Gateway release **$LATEST** is available. Skills currently target **$CURRENT**.
+
+          ## Tasks
+          - [ ] Update \`versions.yaml\` with new version info
+          - [ ] Update version references across skills (\`tests/validate-skills.sh\` will find them)
+          - [ ] Review release notes for breaking changes
+          - [ ] Update \`eg-version\` compatibility matrix
+          - [ ] Update \`eg-migrate\` with version-specific notes
+          - [ ] Run E2E tests against new version
+          - [ ] Update README if needed
+
+          Release notes: https://github.com/envoyproxy/gateway/releases/tag/$LATEST" \
+                --label "version-update"
+            fi
+          else
+            echo "Skills are up to date with latest release."
+          fi

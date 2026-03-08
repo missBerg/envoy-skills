@@ -10,7 +10,7 @@ set -euo pipefail
 #   ./install.sh gateway/adopters                    # Install into current directory
 #   ./install.sh gateway/adopters /path/to/my-project  # Install into specific project
 #
-# For cross-agent installation, use: npx skills add envoyproxy/envoy-skills
+# For cross-agent installation, use: npx skills add missBerg/envoy-skills
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

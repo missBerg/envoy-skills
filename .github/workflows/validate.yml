@@ -1,0 +1,22 @@
+name: Validate Skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SKILL.md format
+        run: tests/validate-skills.sh
+
+      - name: Extract and validate YAML
+        run: |
+          tests/extract-yaml.sh gateway/adopters/skills/*/SKILL.md
+          echo "--- Extracted YAML files ---"
+          ls -la /tmp/envoy-skills-yaml/ || true

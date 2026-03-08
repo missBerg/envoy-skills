@@ -1,0 +1,57 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        eg-version: ["v1.7.0"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kind cluster
+        uses: helm/kind-action@v1
+        with:
+          config: tests/kind-config.yaml
+          cluster_name: envoy-skills-test
+
+      - name: Install Envoy Gateway
+        run: |
+          helm install eg oci://docker.io/envoyproxy/gateway-helm \
+            --version ${{ matrix.eg-version }} \
+            -n envoy-gateway-system \
+            --create-namespace \
+            --wait --timeout 5m
+
+          kubectl wait --timeout=5m -n envoy-gateway-system \
+            deployment/envoy-gateway --for=condition=Available
+
+          kubectl apply -f - <<EOF
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: GatewayClass
+          metadata:
+            name: eg
+          spec:
+            controllerName: gateway.envoyproxy.io/gatewayclass-controller
+          EOF
+
+      - name: Deploy test backend
+        run: |
+          kubectl create deployment test-backend --image=nginx:1.27 --port=80
+          kubectl expose deployment test-backend --port=80
+          kubectl wait --timeout=60s deployment/test-backend --for=condition=Available
+
+      - name: Run core E2E tests
+        run: tests/e2e/test-core.sh
+
+      - name: Run policy E2E tests
+        run: tests/e2e/test-policies.sh
+
+      - name: Run dry-run validation
+        run: tests/e2e/test-dry-run.sh

@@ -3,7 +3,7 @@ name: eg-install
 description: Install Envoy Gateway via Helm with production-ready configuration
 arguments:
   - name: Version
-    description: "Envoy Gateway version (e.g., v1.3.0). Defaults to latest stable."
+    description: "Envoy Gateway version (e.g., v1.7.0). Defaults to latest stable."
     required: false
   - name: Namespace
     description: "Namespace for Envoy Gateway controller (default: envoy-gateway-system)"
@@ -18,7 +18,7 @@ Install Envoy Gateway into a Kubernetes cluster using the official Helm chart wi
 
 Determine the version and namespace. If the user did not provide values, use these defaults:
 
-- **Version**: `v1.3.0` (latest stable release targeting Gateway API v1.2)
+- **Version**: `v1.7.0` (latest stable release targeting Gateway API v1.4)
 - **Namespace**: `envoy-gateway-system`
 
 ### Step 2: Install Envoy Gateway via Helm

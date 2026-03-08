@@ -1,0 +1,41 @@
+# Central version configuration for envoy-skills
+# Update this file when a new Envoy Gateway release is published.
+# Run tests/validate-skills.sh to check all skills reference the correct version.
+
+envoy_gateway:
+  latest_stable: "v1.7.0"
+  previous_stable: "v1.6.2"
+  gateway_api: "v1.4.1"
+
+  supported:
+    - version: "v1.7.0"
+      gateway_api: "v1.4.1"
+      envoy_proxy: "v1.37.x"
+      kubernetes: ["v1.31", "v1.32", "v1.33", "v1.34"]
+      eol: null
+    - version: "v1.6.2"
+      gateway_api: "v1.4.0"
+      envoy_proxy: "v1.36.x"
+      kubernetes: ["v1.30", "v1.31", "v1.32", "v1.33"]
+      eol: "2026-05-13"
+    - version: "v1.5.0"
+      gateway_api: "v1.3.0"
+      envoy_proxy: "v1.35.x"
+      kubernetes: ["v1.29", "v1.30", "v1.31", "v1.32"]
+      eol: "2025-11-01"
+
+  crd_api_versions:
+    gateway_api: "gateway.networking.k8s.io/v1"
+    envoy_gateway: "gateway.envoyproxy.io/v1alpha1"
+
+  breaking_changes:
+    - from: "v1.5.x"
+      to: "v1.6.x"
+      items:
+        - "BackendTLSPolicy moved from v1alpha3 to v1"
+        - "CRDs must be upgraded before controller"
+    - from: "v1.6.x"
+      to: "v1.7.x"
+      items:
+        - "HTTPRoute status.parents validation stricter"
+        - "CRD sequencing critical - update CRDs before controller"

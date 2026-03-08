@@ -11,17 +11,16 @@ This repository contains coding agent skills for the Envoy ecosystem (Envoy Gate
 - `ai-gateway/` - Envoy AI Gateway skills (planned)
 
 Each audience directory contains:
-- `skills/<name>/SKILL.md` - Atomic slash-command skills
-- `agents/<name>.md` - Orchestrating agents that compose skills
-- `rules/<name>.md` - Always-on context rules
+- `skills/<name>/SKILL.md` - All skills (atomic, orchestrator, and reference)
 
 ## Conventions
 
 - Skill names use lowercase with hyphens: `eg-install`, `eg-auth`
 - Prefix skills by project: `eg-` (gateway), `ep-` (proxy), `eai-` (AI gateway)
 - Skills generate working Kubernetes YAML targeting the latest stable release
-- Rules reference the Envoy Gateway threat model and Gateway API spec
-- Agents ask intake questions before generating configuration
+- Version references are centralized in `versions.yaml` — update there first
+- Reference the Envoy Gateway threat model and Gateway API spec
+- Orchestrator skills ask intake questions before generating configuration
 
 ## Key References
 
@@ -37,3 +36,6 @@ Each audience directory contains:
 - All YAML must use correct apiVersion for Gateway API v1 resources
 - Include comments in generated YAML explaining non-obvious choices
 - Reference the threat model (EGTM-xxx) when making security recommendations
+- Use the version from `versions.yaml` (latest_stable) — never hardcode versions without checking
+- Run `tests/validate-skills.sh` to verify format and version consistency
+- Run `tests/extract-yaml.sh` on modified skills to verify YAML extracts cleanly

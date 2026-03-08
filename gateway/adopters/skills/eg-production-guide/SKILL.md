@@ -67,7 +67,7 @@ description: Envoy Gateway production deployment — deployment modes, performan
 ### Installation
 ```bash
 helm install eg oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.3.0 \
+  --version v1.7.0 \
   -n envoy-gateway-system \
   --create-namespace
 ```
