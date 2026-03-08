@@ -24,7 +24,10 @@ NC='\033[0m'
 
 # --- Find repo root ---
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SKILLS_DIR="${REPO_ROOT}/gateway/adopters/skills"
+SKILLS_DIRS=(
+  "${REPO_ROOT}/gateway/adopters/skills"
+  "${REPO_ROOT}/gateway/contributors/skills"
+)
 
 # --- Read latest_stable from versions.yaml ---
 VERSIONS_FILE="${REPO_ROOT}/versions.yaml"
@@ -47,18 +50,19 @@ failed=0
 warnings=0
 
 # --- Find all SKILL.md files ---
-if [[ ! -d "$SKILLS_DIR" ]]; then
-  echo -e "${RED}Error: Skills directory not found: ${SKILLS_DIR}${NC}"
-  exit 1
-fi
-
 skill_files=()
-while IFS= read -r -d '' f; do
-  skill_files+=("$f")
-done < <(find "$SKILLS_DIR" -name "SKILL.md" -type f -print0 | sort -z)
+for skills_dir in "${SKILLS_DIRS[@]}"; do
+  if [[ ! -d "$skills_dir" ]]; then
+    echo -e "${YELLOW}Warning: Skills directory not found: ${skills_dir} (skipping)${NC}"
+    continue
+  fi
+  while IFS= read -r -d '' f; do
+    skill_files+=("$f")
+  done < <(find "$skills_dir" -name "SKILL.md" -type f -print0 | sort -z)
+done
 
 if [[ ${#skill_files[@]} -eq 0 ]]; then
-  echo -e "${RED}Error: No SKILL.md files found under ${SKILLS_DIR}${NC}"
+  echo -e "${RED}Error: No SKILL.md files found under any skills directory${NC}"
   exit 1
 fi
 
