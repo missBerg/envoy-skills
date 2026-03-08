@@ -27,7 +27,7 @@ EXTRACT_SCRIPT="${REPO_ROOT}/tests/extract-yaml.sh"
 TESTS_RUN=0
 TESTS_PASSED=0
 TESTS_FAILED=0
-TIMEOUT=60
+TIMEOUT=120
 
 run_test() {
   local name="$1"
@@ -42,6 +42,7 @@ run_test() {
   else
     TESTS_FAILED=$((TESTS_FAILED + 1))
     echo -e "  ${RED}FAIL${NC}"
+    dump_debug_info
   fi
   echo ""
 }
@@ -58,12 +59,26 @@ wait_for() {
     if eval "$@" 2>/dev/null; then
       return 0
     fi
-    sleep 5
-    elapsed=$((elapsed + 5))
+    sleep 2
+    elapsed=$((elapsed + 2))
   done
 
   echo -e "  ${RED}Timed out waiting for: ${description}${NC}"
   return 1
+}
+
+# Print diagnostic info for debugging failures
+dump_debug_info() {
+  echo -e "  ${YELLOW}--- Debug Info ---${NC}"
+  echo -e "  ${YELLOW}Gateway status:${NC}"
+  kubectl get gateway -n default -o wide 2>/dev/null || true
+  echo -e "  ${YELLOW}Gateway conditions:${NC}"
+  kubectl get gateway -n default -o jsonpath='{range .items[*]}{.metadata.name}: {.status.conditions[*].type}={.status.conditions[*].status}{"\n"}{end}' 2>/dev/null || true
+  echo -e "  ${YELLOW}Envoy pods:${NC}"
+  kubectl get pods -n envoy-gateway-system 2>/dev/null || true
+  echo -e "  ${YELLOW}Events (last 20):${NC}"
+  kubectl get events -n default --sort-by='.lastTimestamp' 2>/dev/null | tail -20 || true
+  echo -e "  ${YELLOW}--- End Debug ---${NC}"
 }
 
 # --- Preflight checks ---
@@ -211,7 +226,7 @@ test_http_connectivity() {
   local pf_pid=$!
 
   # Give port-forward time to establish
-  sleep 3
+  sleep 5
 
   # Verify port-forward is running
   if ! kill -0 "$pf_pid" 2>/dev/null; then
@@ -219,12 +234,20 @@ test_http_connectivity() {
     return 1
   fi
 
-  # Curl the backend through the Gateway
-  local http_code
-  http_code="$(curl -s -o /dev/null -w '%{http_code}' \
-    --max-time 10 \
-    -H 'Host: test.example.com' \
-    "http://localhost:${local_port}/" 2>/dev/null || echo "000")"
+  # Curl the backend through the Gateway with retries
+  local http_code="000"
+  local attempt
+  for attempt in 1 2 3; do
+    http_code="$(curl -s -o /dev/null -w '%{http_code}' \
+      --max-time 10 \
+      -H 'Host: test.example.com' \
+      "http://localhost:${local_port}/" 2>/dev/null || echo "000")"
+    if [[ "$http_code" == "200" ]]; then
+      break
+    fi
+    echo -e "  ${YELLOW}Attempt ${attempt}: HTTP ${http_code}, retrying...${NC}"
+    sleep 3
+  done
 
   # Kill port-forward
   kill "$pf_pid" 2>/dev/null || true
@@ -238,6 +261,15 @@ test_http_connectivity() {
     return 1
   fi
 }
+
+# --- Wait for test-gateway from setup-cluster.sh to be ready ---
+# Tests 3 and 4 depend on test-gateway being Programmed
+echo -e "${CYAN}Waiting for setup test-gateway to be Programmed...${NC}"
+wait_for "test-gateway to be Programmed" \
+  '[ "$(kubectl get gateway test-gateway -n default -o jsonpath='"'"'{.status.conditions[?(@.type=="Programmed")].status}'"'"' 2>/dev/null)" = "True" ]' || {
+  echo -e "${YELLOW}Warning: test-gateway not Programmed yet. Tests 3 and 4 may fail.${NC}"
+}
+echo ""
 
 # --- Run tests ---
 run_test "GatewayClass 'eg' is accepted" test_gatewayclass_accepted

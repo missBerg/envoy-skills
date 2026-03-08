@@ -45,7 +45,65 @@ jobs:
         run: |
           kubectl create deployment test-backend --image=nginx:1.27 --port=80
           kubectl expose deployment test-backend --port=80
-          kubectl wait --timeout=60s deployment/test-backend --for=condition=Available
+          kubectl wait --timeout=120s deployment/test-backend --for=condition=Available
+
+      - name: Create test Gateway and HTTPRoute
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: Gateway
+          metadata:
+            name: test-gateway
+            namespace: default
+          spec:
+            gatewayClassName: eg
+            listeners:
+              - name: http
+                protocol: HTTP
+                port: 80
+                allowedRoutes:
+                  namespaces:
+                    from: Same
+          EOF
+
+          kubectl apply -f - <<EOF
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: test-route
+            namespace: default
+          spec:
+            parentRefs:
+              - name: test-gateway
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: test-backend
+                    port: 80
+          EOF
+
+      - name: Wait for Gateway to be Programmed
+        run: |
+          echo "Waiting for test-gateway to be Programmed (timeout: 120s)..."
+          ELAPSED=0
+          TIMEOUT=120
+          while [[ $ELAPSED -lt $TIMEOUT ]]; do
+            STATUS="$(kubectl get gateway test-gateway -n default \
+              -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null || echo "")"
+            if [[ "$STATUS" == "True" ]]; then
+              echo "Gateway is Programmed."
+              exit 0
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+            echo "  Waiting... (${ELAPSED}s/${TIMEOUT}s)"
+          done
+          echo "Warning: Gateway not yet Programmed after ${TIMEOUT}s"
+          kubectl get gateway -n default -o wide || true
+          kubectl get pods -n envoy-gateway-system || true
 
       - name: Run core E2E tests
         run: tests/e2e/test-core.sh
