@@ -16,43 +16,22 @@ Before generating any code or configuration, ask the user these questions. Skip 
 ### Questions
 
 1. **Purpose**: What do you need the extension to do?
-   - Request transformation (add/modify/remove headers, rewrite body)
-   - Custom authentication or authorization
-   - Content inspection (PII redaction, compliance scanning)
-   - Custom rate limiting logic
-   - Response modification (add headers, transform body)
-   - Request/response logging or auditing
-   - AI Gateway functionality (model routing, token tracking)
+   - Request/response transformation (headers, body rewriting)
+   - Custom authentication, authorization, or content inspection
+   - Custom rate limiting, logging/auditing, or AI Gateway functionality
    - Something else (describe it)
 
 2. **Language preference**: What language do you prefer?
-   - Go (recommended for ExtProc -- best ecosystem support)
-   - Rust (recommended for Wasm -- best performance)
-   - C++ (Wasm option -- lower level)
-   - Python (ExtProc option -- easier prototyping)
-   - TypeScript/JavaScript (ExtProc option)
-   - Lua (inline scripting -- simplest for header manipulation)
+   - Go (recommended for ExtProc), Rust (recommended for Wasm), Lua (simplest for headers)
+   - Python, TypeScript, C++ (ExtProc or Wasm options)
 
-3. **Processing scope**: Do you need to inspect or modify request/response bodies, or just headers?
-   - Headers only (simplest, lowest latency)
-   - Request body (requires body buffering or streaming)
-   - Response body (requires response body buffering or streaming)
-   - Both request and response bodies
+3. **Processing scope**: Headers only, request body, response body, or both bodies?
 
-4. **Latency tolerance**: What is your latency tolerance for the extension?
-   - Minimal (< 1ms additional latency) -- consider Wasm (in-process)
-   - Moderate (1-10ms) -- ExtProc works well
-   - Flexible (10ms+) -- ExtProc with external service calls
+4. **Latency tolerance**: Minimal (< 1ms, consider Wasm), moderate (1-10ms, ExtProc), or flexible (10ms+)?
 
-5. **External dependencies**: Does the extension need to call external services?
-   - Yes, a database (Redis, PostgreSQL, etc.)
-   - Yes, an external API (REST, gRPC)
-   - Yes, a cache
-   - No, self-contained logic only
+5. **External dependencies**: Does the extension need to call external services (database, API, cache)?
 
-6. **Environment**: Is this for production or prototyping?
-   - Production (needs health checks, scaling, failover, monitoring)
-   - Prototyping / development (simplicity over resilience)
+6. **Environment**: Production (health checks, scaling, failover) or prototyping?
 
 ## Workflow
 
@@ -192,40 +171,7 @@ func (p *Processor) Process(stream extprocpb.ExternalProcessor_ProcessServer) er
 				},
 			}
 
-		case *extprocpb.ProcessingRequest_ResponseHeaders:
-			resp.Response = &extprocpb.ProcessingResponse_ResponseHeaders{
-				ResponseHeaders: &extprocpb.HeadersResponse{
-					Response: &extprocpb.CommonResponse{
-						HeaderMutation: &extprocpb.HeaderMutation{
-							SetHeaders: []*corev3.HeaderValueOption{
-								{
-									Header: &corev3.HeaderValue{
-										// TODO: Replace with your custom response header logic
-										Key:      "x-ext-proc-processed",
-										RawValue: []byte("true"),
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
-		case *extprocpb.ProcessingRequest_RequestBody:
-			// TODO: Implement request body processing
-			resp.Response = &extprocpb.ProcessingResponse_RequestBody{
-				RequestBody: &extprocpb.BodyResponse{
-					Response: &extprocpb.CommonResponse{},
-				},
-			}
-
-		case *extprocpb.ProcessingRequest_ResponseBody:
-			// TODO: Implement response body processing
-			resp.Response = &extprocpb.ProcessingResponse_ResponseBody{
-				ResponseBody: &extprocpb.BodyResponse{
-					Response: &extprocpb.CommonResponse{},
-				},
-			}
+		// TODO: Add cases for ResponseHeaders, RequestBody, ResponseBody as needed
 		}
 
 		if err := stream.Send(resp); err != nil {
@@ -276,8 +222,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ext-proc-server       # TODO: Rename to your extension name
-  labels:
-    app: ext-proc-server
 spec:
   replicas: 2                 # TODO: Adjust for production
   selector:
@@ -290,20 +234,15 @@ spec:
     spec:
       containers:
         - name: ext-proc
-          image: your-registry/ext-proc-server:latest  # TODO: Replace with your image
+          image: your-registry/ext-proc-server:latest  # TODO: Replace
           ports:
             - containerPort: 9002
-              protocol: TCP
           readinessProbe:
             grpc:
               port: 9002
-            initialDelaySeconds: 5
-            periodSeconds: 10
           livenessProbe:
             grpc:
               port: 9002
-            initialDelaySeconds: 10
-            periodSeconds: 30
           resources:
             requests:
               cpu: 100m
@@ -315,14 +254,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ext-proc-server       # TODO: Match the Deployment name
+  name: ext-proc-server
 spec:
   selector:
     app: ext-proc-server
   ports:
     - port: 9002
       targetPort: 9002
-      protocol: TCP
 ```
 
 #### Wasm Scaffold (Rust)
@@ -395,40 +333,21 @@ impl HttpContext for Filter {
         self.add_http_response_header("x-wasm-filter-response", "processed");
         Action::Continue
     }
-
-    // Uncomment for body processing:
-    // fn on_http_request_body(&mut self, body_size: usize, end_of_stream: bool) -> Action {
-    //     if !end_of_stream {
-    //         return Action::Pause;
-    //     }
-    //     if let Some(body) = self.get_http_request_body(0, body_size) {
-    //         // TODO: Process request body
-    //     }
-    //     Action::Continue
-    // }
+    // TODO: Add on_http_request_body / on_http_response_body for body processing
 }
 ```
 
 **Build and push as OCI image:**
 ```bash
-# Build the Wasm binary
 cargo build --target wasm32-wasip1 --release
-
-# Create OCI image
-cat > Dockerfile <<'EOF'
-FROM scratch
-COPY target/wasm32-wasip1/release/wasm_filter.wasm plugin.wasm
-EOF
-
-docker build -t your-registry/wasm-filter:v0.1.0 .
+# Package as OCI image (Dockerfile: FROM scratch, COPY target/wasm32-wasip1/release/wasm_filter.wasm plugin.wasm)
+docker build -t your-registry/wasm-filter:v0.1.0 .  # TODO: Replace registry
 docker push your-registry/wasm-filter:v0.1.0
 ```
 
 #### Lua Scaffold
 
-For simple header manipulation, generate an inline Lua script or ConfigMap-based script.
-
-**Inline Lua (simplest):**
+For simple header manipulation, generate an inline Lua script:
 ```yaml
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyExtensionPolicy
@@ -460,40 +379,7 @@ spec:
         end
 ```
 
-**ConfigMap-based Lua (better for version control):**
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: lua-filter-script  # TODO: Choose a descriptive name
-data:
-  lua: |
-    function envoy_on_request(request_handle)
-      -- TODO: Implement your logic
-      request_handle:headers():add("x-lua-processed", "true")
-    end
-
-    function envoy_on_response(response_handle)
-      -- TODO: Implement your logic
-      response_handle:headers():add("x-lua-response", "processed")
-    end
----
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: EnvoyExtensionPolicy
-metadata:
-  name: lua-filter-policy
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: my-route         # TODO: Replace
-  lua:
-    - type: ValueRef
-      valueRef:
-        name: lua-filter-script
-        kind: ConfigMap
-        group: v1
-```
+For version control, use a ConfigMap with `type: ValueRef` instead of inline Lua.
 
 ### Phase 3: Configure EnvoyExtensionPolicy
 
@@ -553,32 +439,16 @@ spec:
 
 ### Phase 4: Test the Extension
 
-Provide curl commands to verify the extension is working.
-
 ```bash
-# Get the Gateway address
+# Get the Gateway address and test
 export GATEWAY_HOST=$(kubectl get gateway <gateway-name> -o jsonpath='{.status.addresses[0].value}')
+curl -v http://$GATEWAY_HOST/test-path -H "Host: app.example.com" 2>&1 | grep -i "x-processed-by\|x-ext-proc\|x-wasm-filter\|x-lua"
 
-# Test without the extension (baseline)
-curl -v http://$GATEWAY_HOST/test-path \
-  -H "Host: app.example.com"
-
-# After applying the extension policy, verify the custom headers appear
-curl -v http://$GATEWAY_HOST/test-path \
-  -H "Host: app.example.com" 2>&1 | grep -i "x-processed-by\|x-ext-proc\|x-wasm-filter\|x-lua"
-```
-
-For ExtProc, also check the processor logs:
-
-```bash
+# For ExtProc, check processor logs
 kubectl logs -l app=ext-proc-server -f
-```
 
-Verify the EnvoyExtensionPolicy is accepted:
-
-```bash
-kubectl get envoyextensionpolicy <policy-name> -o yaml
-# Check status.conditions for Accepted: True
+# Verify the EnvoyExtensionPolicy is accepted
+kubectl get envoyextensionpolicy <policy-name> -o jsonpath='{.status.conditions}'
 ```
 
 ### Phase 5: Production Considerations
@@ -587,40 +457,12 @@ For production deployments, apply these hardening steps:
 
 #### ExtProc Production Hardening
 
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: EnvoyExtensionPolicy
-metadata:
-  name: ext-proc-production
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: my-route
-  extProc:
-    - backendRefs:
-        - name: ext-proc-server
-          port: 9002
-      processingMode:
-        request: {}
-        response: {}
-      # Tune timeout for your processor's actual latency profile
-      messageTimeout: 500ms          # TODO: Set based on p99 latency + buffer
-      # failOpen: decide based on criticality
-      # - false: requests fail if processor is down (use for auth, compliance)
-      # - true: requests bypass processor if it is down (use for logging, metrics)
-      failOpen: false                # TODO: Set based on your requirements
-```
-
-**Scaling the ExtProc service:**
-- Set replicas >= 2 for availability
-- Add HPA based on CPU or gRPC connection count
-- Set resource requests and limits
-- Configure PodDisruptionBudget
-
-**Health checks:**
-- Use gRPC health checking protocol (already included in the scaffold)
-- Configure readiness and liveness probes in the Deployment
+Tune the EnvoyExtensionPolicy from Phase 3 for production:
+- Set `messageTimeout` based on your processor's p99 latency + buffer (e.g., `500ms`)
+- Set `failOpen: false` for critical extensions (auth, compliance), `true` for non-critical (logging)
+- Set Deployment replicas >= 2, add HPA based on CPU or gRPC connection count
+- Configure resource requests/limits and PodDisruptionBudget
+- gRPC health checks are already included in the scaffold
 
 #### Wasm Production Considerations
 
@@ -639,14 +481,7 @@ spec:
 
 ## Output Requirements
 
-Generate all artifacts needed for a working extension:
-
-1. Complete source code for the chosen mechanism
-2. Build instructions (Dockerfile, Cargo.toml, go.mod)
-3. Kubernetes manifests (Deployment, Service for ExtProc)
-4. EnvoyExtensionPolicy connecting the extension to the Gateway/Route
-5. Test commands (curl examples showing before/after behavior)
-6. For production: scaling, health check, and monitoring guidance
+Generate: source code, build instructions (Dockerfile, Cargo.toml, go.mod), Kubernetes manifests, EnvoyExtensionPolicy, test commands, and production guidance.
 
 ## Guidelines
 

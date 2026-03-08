@@ -180,30 +180,7 @@ Client -> Envoy Gateway Proxy -> ztunnel -> Waypoint Proxy -> Application Pod
 
 Envoy Gateway can also serve as a waypoint proxy in ambient mode, providing a unified Envoy-based data plane for both ingress and in-mesh L7 processing.
 
-**Gateway configuration (ambient mode):**
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: ingress-gw
-  namespace: gateway-system  # TODO: Replace
-spec:
-  gatewayClassName: eg       # Managed by Envoy Gateway
-  listeners:
-    - name: https
-      protocol: HTTPS
-      port: 443
-      hostname: "*.example.com"  # TODO: Replace
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: wildcard-tls
-      allowedRoutes:
-        namespaces:
-          from: All
-```
+Use the same Gateway configuration as sidecar mode above (the Gateway resource is identical for both modes).
 
 **Enroll the application namespace in ambient mesh:**
 
@@ -328,30 +305,7 @@ Important: Both Envoy Gateway and Istio must propagate the same trace context he
 
 #### Shared Metrics
 
-Configure both to export to the same Prometheus:
-
-```yaml
-# Envoy Gateway proxy metrics (via pod annotations)
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: EnvoyProxy
-metadata:
-  name: mesh-integrated-proxy
-  namespace: envoy-gateway-system
-spec:
-  provider:
-    type: Kubernetes
-    kubernetes:
-      envoyDeployment:
-        pod:
-          annotations:
-            prometheus.io/scrape: "true"
-            prometheus.io/port: "19001"
-  telemetry:
-    metrics:
-      enableVirtualHostStats: true
-```
-
-Istio metrics are already scraped by Prometheus if Istio was installed with the default monitoring configuration. The Envoy Gateway proxy metrics use different metric names (prefixed with `envoy_`) but can be correlated by upstream/downstream cluster names.
+Add Prometheus scrape annotations to the EnvoyProxy resource (`prometheus.io/scrape: "true"`, `prometheus.io/port: "19001"`) and enable `enableVirtualHostStats: true` in `spec.telemetry.metrics`. Istio metrics are already scraped by Prometheus if installed with default monitoring. Envoy Gateway metrics (prefixed with `envoy_`) can be correlated with Istio metrics by upstream/downstream cluster names.
 
 ### Phase 6: Known Limitations and Workarounds
 
@@ -473,27 +427,9 @@ spec:
               protocol: TCP
 ```
 
-**Envoy Gateway SecurityPolicy (L7):**
-```yaml
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: SecurityPolicy
-metadata:
-  name: app-auth
-  namespace: app-namespace  # TODO: Replace
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: app-route        # TODO: Replace
-  jwt:
-    providers:
-      - name: my-provider
-        issuer: "https://auth.example.com"  # TODO: Replace
-        remoteJWKS:
-          uri: "https://auth.example.com/.well-known/jwks.json"  # TODO: Replace
-```
+For L7 authentication and authorization, use the `/eg-auth` skill to create SecurityPolicy resources targeting your HTTPRoutes.
 
-**Defense in depth:** Use Cilium NetworkPolicies to restrict which pods can receive traffic at the network level (L3/L4), and use Envoy Gateway SecurityPolicies for application-level authentication and authorization (L7). This ensures that even if one layer is misconfigured, the other provides protection.
+**Defense in depth:** Use Cilium NetworkPolicies for L3/L4 network restrictions and Envoy Gateway SecurityPolicies for L7 authentication/authorization. This ensures that even if one layer is misconfigured, the other provides protection.
 
 ### Phase 5: Observability with Cilium
 
