@@ -1,0 +1,22 @@
+{
+  "name": "envoy-skills",
+  "owner": {
+    "name": "Envoy Community"
+  },
+  "metadata": {
+    "description": "Agent skills for the Envoy ecosystem — Envoy Gateway, Envoy Proxy, and Envoy AI Gateway",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "envoy-gateway-adopters",
+      "source": "./gateway/adopters",
+      "description": "Skills for developers deploying and configuring Envoy Gateway as a Kubernetes-native API gateway",
+      "version": "1.0.0",
+      "keywords": ["envoy", "envoy-gateway", "kubernetes", "gateway-api", "ingress", "api-gateway", "envoy-proxy"],
+      "category": "integration",
+      "license": "Apache-2.0",
+      "strict": false
+    }
+  ]
+}

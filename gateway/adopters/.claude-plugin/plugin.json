@@ -1,0 +1,26 @@
+{
+  "name": "envoy-gateway-adopters",
+  "version": "1.0.0",
+  "description": "Skills for developers deploying and configuring Envoy Gateway as a Kubernetes-native API gateway. Covers installation, routing, TLS, authentication, rate limiting, extensions, observability, and production hardening.",
+  "author": {
+    "name": "Envoy Community",
+    "url": "https://github.com/envoyproxy/gateway"
+  },
+  "homepage": "https://gateway.envoyproxy.io/",
+  "repository": "https://github.com/envoyproxy/envoy-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "envoy",
+    "envoy-gateway",
+    "kubernetes",
+    "gateway-api",
+    "ingress",
+    "api-gateway",
+    "envoy-proxy",
+    "tls",
+    "rate-limiting",
+    "authentication",
+    "wasm",
+    "extproc"
+  ]
+}
