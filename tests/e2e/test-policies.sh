@@ -101,16 +101,23 @@ EOF
   then
     echo -e "  BackendTrafficPolicy applied successfully"
 
-    # Verify it was accepted (check status condition)
-    sleep 3
-    local status
-    status="$(kubectl get backendtrafficpolicy "${policy_name}" -n default \
-      -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}' 2>/dev/null || echo "")"
+    # Wait for the policy to be accepted
+    local status=""
+    local elapsed=0
+    while [[ $elapsed -lt 30 ]]; do
+      status="$(kubectl get backendtrafficpolicy "${policy_name}" -n default \
+        -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}' 2>/dev/null || echo "")"
+      if [[ "$status" == "True" ]]; then
+        break
+      fi
+      sleep 2
+      elapsed=$((elapsed + 2))
+    done
 
     if [[ "$status" == "True" ]]; then
       echo -e "  Policy is Accepted by controller"
     else
-      echo -e "  ${YELLOW}Policy applied but Accepted status is '${status:-unknown}' (may need time)${NC}"
+      echo -e "  ${YELLOW}Policy applied but Accepted status is '${status:-unknown}' after ${elapsed}s${NC}"
     fi
 
     # Clean up
@@ -147,16 +154,23 @@ EOF
   then
     echo -e "  ClientTrafficPolicy applied successfully"
 
-    # Verify acceptance
-    sleep 3
-    local status
-    status="$(kubectl get clienttrafficpolicy "${policy_name}" -n default \
-      -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}' 2>/dev/null || echo "")"
+    # Wait for the policy to be accepted
+    local status=""
+    local elapsed=0
+    while [[ $elapsed -lt 30 ]]; do
+      status="$(kubectl get clienttrafficpolicy "${policy_name}" -n default \
+        -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}' 2>/dev/null || echo "")"
+      if [[ "$status" == "True" ]]; then
+        break
+      fi
+      sleep 2
+      elapsed=$((elapsed + 2))
+    done
 
     if [[ "$status" == "True" ]]; then
       echo -e "  Policy is Accepted by controller"
     else
-      echo -e "  ${YELLOW}Policy applied but Accepted status is '${status:-unknown}' (may need time)${NC}"
+      echo -e "  ${YELLOW}Policy applied but Accepted status is '${status:-unknown}' after ${elapsed}s${NC}"
     fi
 
     # Clean up
