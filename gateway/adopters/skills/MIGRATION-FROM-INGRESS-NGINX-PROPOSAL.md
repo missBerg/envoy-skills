@@ -174,14 +174,14 @@ eg-nginx-migrate-orchestrator (entry point)
 
 ## Implementation Checklist
 
-- [ ] Create `eg-nginx-readiness` — readiness evaluation
-- [ ] Create `eg-nginx-analyze` — config analysis and user confirmation
-- [ ] Create `eg-nginx-capability-map` — annotation → EG mapping reference
-- [ ] Create `eg-nginx-migration-approach` — migration strategy and execution
-- [ ] Create `eg-nginx-migrate-orchestrator` — migration entry point
-- [ ] Update `eg-orchestrator` to mention migration path and delegate to `eg-nginx-migrate-orchestrator` when user says they are migrating from ingress-nginx
-- [ ] Add migration keywords to `plugin.json` (e.g. `ingress-nginx`, `migration`, `ingress`)
-- [ ] Run `tests/validate-skills.sh` and `tests/extract-yaml.sh` on new skills
+- [x] Create `eg-nginx-readiness` — readiness evaluation
+- [x] Create `eg-nginx-analyze` — config analysis and user confirmation
+- [x] Create `eg-nginx-capability-map` — annotation → EG mapping reference
+- [x] Create `eg-nginx-migration-approach` — migration strategy and execution
+- [x] Create `eg-nginx-migrate-orchestrator` — migration entry point
+- [x] Update `eg-orchestrator` to mention migration path and delegate to `eg-nginx-migrate-orchestrator` when user says they are migrating from ingress-nginx
+- [x] Add migration keywords to `plugin.json` (e.g. `ingress-nginx`, `migration`, `ingress`)
+- [x] Run `tests/validate-skills.sh` and `tests/extract-yaml.sh` on new skills
 
 ---
 
