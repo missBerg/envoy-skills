@@ -24,11 +24,11 @@ if [[ ! -d "${SKILL_SET_PATH}" ]]; then
   echo ""
   echo "Available skill sets:"
   echo "  gateway/adopters     Envoy Gateway skills for adopters"
+  echo "  ai-gateway/adopters  Envoy AI Gateway skills for adopters"
   echo ""
   echo "Planned:"
   echo "  gateway/contributors Envoy Gateway skills for contributors"
   echo "  proxy/adopters       Envoy Proxy skills"
-  echo "  ai-gateway/adopters  Envoy AI Gateway skills"
   exit 1
 fi
 
@@ -55,7 +55,14 @@ done
 echo ""
 echo "Installed ${INSTALLED} skills from ${SKILL_SET} into ${TARGET}/.claude/skills/"
 echo ""
-echo "Quick start:"
-echo "  /eg-orchestrator  — guided setup (start here)"
-echo "  /eg-install       — install Envoy Gateway"
-echo "  /eg-fundamentals  — learn the resource model"
+if [[ "${SKILL_SET}" == "ai-gateway/adopters" ]]; then
+  echo "Quick start:"
+  echo "  /eai-orchestrator  — guided setup (start here)"
+  echo "  /eai-install       — install Envoy AI Gateway"
+  echo "  /eai-fundamentals  — learn the resource model"
+else
+  echo "Quick start:"
+  echo "  /eg-orchestrator  — guided setup (start here)"
+  echo "  /eg-install       — install Envoy Gateway"
+  echo "  /eg-fundamentals  — learn the resource model"
+fi

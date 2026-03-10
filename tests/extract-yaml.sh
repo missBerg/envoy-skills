@@ -74,6 +74,17 @@ substitute_templates() {
   content="${content//\$\{JwksUri\}/https://example.com/.well-known/jwks.json}"
   content="${content//\$\{Issuer\}/https://example.com}"
   content="${content//\$\{SecretName\}/test-tls-secret}"
+  content="${content//\$\{AIGatewayVersion\}/v0.5.0}"
+  content="${content//\$\{EnvoyGatewayVersion\}/v1.7.0}"
+  content="${content//\$\{GatewayName\}/test-gateway}"
+  content="${content//\$\{RouteName\}/test-route}"
+  content="${content//\$\{ModelHeader\}/gpt-4o-mini}"
+  content="${content//\$\{BackendNames\}/test-backend}"
+  content="${content//\$\{BackendName\}/test-backend}"
+  content="${content//\$\{Schema\}/OpenAI}"
+  content="${content//\$\{Port\}/443}"
+  content="${content//\$\{PolicyType\}/APIKey}"
+  content="${content//\$\{AIServiceBackendName\}/test-backend}"
 
   # Catch-all: replace any remaining ${...} with test-value
   # Use sed for regex replacement
