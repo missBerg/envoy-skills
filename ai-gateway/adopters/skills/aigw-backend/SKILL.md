@@ -1,5 +1,5 @@
 ---
-name: eai-backend
+name: aigw-backend
 description: Create an AIServiceBackend and Envoy Gateway Backend for an AI provider
 arguments:
   - name: BackendName
@@ -160,5 +160,5 @@ spec:
 - [ ] Backend hostname and port correct
 - [ ] AIServiceBackend schema matches provider API
 - [ ] BackendTLSPolicy for HTTPS external endpoints
-- [ ] BackendSecurityPolicy attached for cloud provider auth (see `/eai-auth`)
+- [ ] BackendSecurityPolicy attached for cloud provider auth (see `/aigw-auth`)
 - [ ] Prefix set if backend uses non-standard path

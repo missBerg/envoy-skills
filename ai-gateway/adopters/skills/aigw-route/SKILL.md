@@ -1,5 +1,5 @@
 ---
-name: eai-route
+name: aigw-route
 description: Create an AIGatewayRoute to bind AI backends to a Gateway with model-based routing
 arguments:
   - name: GatewayName

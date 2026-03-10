@@ -1,5 +1,5 @@
 ---
-name: eai-auth
+name: aigw-auth
 description: Configure BackendSecurityPolicy for AI provider authentication — API key, AWS, Azure, GCP credentials
 arguments:
   - name: PolicyType

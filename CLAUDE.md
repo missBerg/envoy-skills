@@ -10,6 +10,7 @@ This repository contains coding agent skills for the Envoy ecosystem (Envoy Gate
 - `proxy/` - Envoy Proxy skills (planned)
 - `ai-gateway/` - Envoy AI Gateway skills
   - `adopters/` - For developers deploying Envoy AI Gateway
+  - `contributors/` - For developers contributing to the Envoy AI Gateway codebase
 
 Each audience directory contains:
 - `skills/<name>/SKILL.md` - All skills (atomic, orchestrator, and reference)
@@ -17,7 +18,7 @@ Each audience directory contains:
 ## Conventions
 
 - Skill names use lowercase with hyphens: `eg-install`, `eg-auth`
-- Prefix skills by project: `eg-` (gateway), `ep-` (proxy), `eai-` (AI gateway)
+- Prefix skills by project: `eg-` (gateway), `ep-` (proxy), `aigw-` (AI gateway)
 - Skills generate working Kubernetes YAML targeting the latest stable release
 - Version references are centralized in `versions.yaml` — update there first
 - Reference the Envoy Gateway threat model and Gateway API spec

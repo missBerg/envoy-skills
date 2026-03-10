@@ -1,5 +1,5 @@
 ---
-name: eai-fundamentals
+name: aigw-fundamentals
 description: Envoy AI Gateway fundamentals — CRDs, resource hierarchy, API schemas, and provider authentication
 ---
 

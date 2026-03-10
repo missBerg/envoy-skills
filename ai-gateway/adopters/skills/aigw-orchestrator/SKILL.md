@@ -1,6 +1,6 @@
 ---
-name: eai-orchestrator
-description: Orchestrate a complete Envoy AI Gateway setup — interview user and compose eai-install, eai-route, eai-backend, eai-auth
+name: aigw-orchestrator
+description: Orchestrate a complete Envoy AI Gateway setup — interview user and compose aigw-install, aigw-route, aigw-backend, aigw-auth
 arguments: []
 ---
 
@@ -11,7 +11,7 @@ Orchestrate a full Envoy AI Gateway deployment by asking intake questions and co
 Before generating configuration, ask:
 
 1. **Installation**
-   - Do you already have Envoy Gateway installed? If not, we need `/eai-install`.
+   - Do you already have Envoy Gateway installed? If not, we need `/aigw-install`.
    - Do you need rate limiting or InferencePool? (addons)
 
 2. **Provider**
@@ -28,13 +28,13 @@ Before generating configuration, ask:
 
 ## Composition Flow
 
-1. **If fresh install**: Run `/eai-install` with user's version/namespace preferences.
+1. **If fresh install**: Run `/aigw-install` with user's version/namespace preferences.
 2. **Gateway + ClientTrafficPolicy**: Ensure Gateway exists and has ClientTrafficPolicy with `bufferLimit: 50Mi`.
 3. **For each provider**:
-   - Run `/eai-backend` with BackendName, Schema, Hostname, Port. (AIServiceBackend must reference Backend, not K8s Service.)
-   - Run `/eai-auth` with PolicyType and AIServiceBackendName; create Secret if API key. At most one BackendSecurityPolicy per backend.
+   - Run `/aigw-backend` with BackendName, Schema, Hostname, Port. (AIServiceBackend must reference Backend, not K8s Service.)
+   - Run `/aigw-auth` with PolicyType and AIServiceBackendName; create Secret if API key. At most one BackendSecurityPolicy per backend.
    - Add BackendTLSPolicy for HTTPS backends.
-4. **Route**: Run `/eai-route` with GatewayName, BackendNames, and optional ModelHeader for each rule.
+4. **Route**: Run `/aigw-route` with GatewayName, BackendNames, and optional ModelHeader for each rule.
 
 ## Example: OpenAI + Anthropic
 
@@ -42,13 +42,13 @@ Before generating configuration, ask:
 
 **Generated flow**:
 
-1. Install (if needed): `/eai-install`
-2. Gateway + ClientTrafficPolicy (from eai-route skill)
-3. Backend + AIServiceBackend for OpenAI: `/eai-backend` BackendName=openai, Schema=OpenAI, Hostname=api.openai.com, Port=443
-4. BackendSecurityPolicy + Secret for OpenAI: `/eai-auth` PolicyType=APIKey, AIServiceBackendName=openai
+1. Install (if needed): `/aigw-install`
+2. Gateway + ClientTrafficPolicy (from aigw-route skill)
+3. Backend + AIServiceBackend for OpenAI: `/aigw-backend` BackendName=openai, Schema=OpenAI, Hostname=api.openai.com, Port=443
+4. BackendSecurityPolicy + Secret for OpenAI: `/aigw-auth` PolicyType=APIKey, AIServiceBackendName=openai
 5. BackendTLSPolicy for api.openai.com
-6. Backend + AIServiceBackend for Anthropic: `/eai-backend` BackendName=anthropic, Schema=Anthropic, Hostname=api.anthropic.com, Port=443
-7. BackendSecurityPolicy + Secret for Anthropic: `/eai-auth` PolicyType=AnthropicAPIKey, AIServiceBackendName=anthropic
+6. Backend + AIServiceBackend for Anthropic: `/aigw-backend` BackendName=anthropic, Schema=Anthropic, Hostname=api.anthropic.com, Port=443
+7. BackendSecurityPolicy + Secret for Anthropic: `/aigw-auth` PolicyType=AnthropicAPIKey, AIServiceBackendName=anthropic
 8. BackendTLSPolicy for api.anthropic.com
 9. AIGatewayRoute with two rules:
    - Match x-ai-eg-model=gpt-4o-mini → openai

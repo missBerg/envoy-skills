@@ -1,5 +1,5 @@
 ---
-name: eai-install
+name: aigw-install
 description: Install Envoy AI Gateway and Envoy Gateway with production-ready configuration for AI workloads
 arguments:
   - name: AIGatewayVersion
@@ -191,7 +191,7 @@ helm upgrade -i aieg oci://docker.io/envoyproxy/ai-gateway-helm \
 
 ### Warnings
 
-- **Buffer limits**: AI workloads often need larger request/response buffers. Use Envoy Gateway's ClientTrafficPolicy to set `connection.bufferLimit` (e.g., `50Mi`) on your Gateway. See `/eai-route` for an example.
+- **Buffer limits**: AI workloads often need larger request/response buffers. Use Envoy Gateway's ClientTrafficPolicy to set `connection.bufferLimit` (e.g., `50Mi`) on your Gateway. See `/aigw-route` for an example.
 - **Envoy Gateway conflict**: Do not install Envoy AI Gateway alongside an existing Envoy Gateway that was installed without the AI Gateway values file. Use a fresh cluster or uninstall first.
 
 ## Checklist
