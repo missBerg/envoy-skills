@@ -17,6 +17,16 @@
       "category": "integration",
       "license": "Apache-2.0",
       "strict": false
+    },
+    {
+      "name": "envoy-ai-gateway-adopters",
+      "source": "./ai-gateway/adopters",
+      "description": "Skills for developers deploying and configuring Envoy AI Gateway for generative AI services",
+      "version": "1.0.0",
+      "keywords": ["envoy", "envoy-ai-gateway", "ai-gateway", "kubernetes", "llm", "openai", "anthropic", "aws-bedrock", "azure-openai", "gcp-vertex"],
+      "category": "integration",
+      "license": "Apache-2.0",
+      "strict": false
     }
   ]
 }

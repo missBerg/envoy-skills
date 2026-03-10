@@ -8,7 +8,8 @@ This repository contains coding agent skills for the Envoy ecosystem (Envoy Gate
   - `adopters/` - For developers deploying Envoy Gateway
   - `contributors/` - For developers contributing to the Envoy Gateway codebase
 - `proxy/` - Envoy Proxy skills (planned)
-- `ai-gateway/` - Envoy AI Gateway skills (planned)
+- `ai-gateway/` - Envoy AI Gateway skills
+  - `adopters/` - For developers deploying Envoy AI Gateway
 
 Each audience directory contains:
 - `skills/<name>/SKILL.md` - All skills (atomic, orchestrator, and reference)

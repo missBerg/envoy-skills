@@ -1,5 +1,5 @@
 # Central version configuration for envoy-skills
-# Update this file when a new Envoy Gateway release is published.
+# Update this file when a new Envoy Gateway or Envoy AI Gateway release is published.
 # Run tests/validate-skills.sh to check all skills reference the correct version.
 
 envoy_gateway:
@@ -39,3 +39,11 @@ envoy_gateway:
       items:
         - "HTTPRoute status.parents validation stricter"
         - "CRD sequencing critical - update CRDs before controller"
+
+envoy_ai_gateway:
+  latest_stable: "v0.5.0"
+  # Envoy AI Gateway requires Envoy Gateway v1.6.x+ and Kubernetes v1.32+
+  envoy_gateway_min: "v1.6.0"
+  kubernetes_min: "1.32"
+  crd_api_versions:
+    aigateway: "aigateway.envoyproxy.io/v1alpha1"

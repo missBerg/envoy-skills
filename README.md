@@ -39,7 +39,7 @@ cp -r /path/to/envoy-skills/gateway/adopters/skills/* .claude/skills/
 |---------|--------|-------------|
 | [Envoy Gateway](gateway/) | Active | Kubernetes-native API gateway built on Envoy Proxy |
 | [Envoy Proxy](proxy/) | Planned | Core Envoy Proxy data plane |
-| [Envoy AI Gateway](ai-gateway/) | Planned | AI-specific traffic management and model routing |
+| [Envoy AI Gateway](ai-gateway/) | Active | AI-specific traffic management and model routing for LLM providers |
 
 ## Audiences
 
@@ -92,6 +92,41 @@ Each project separates skills by audience:
 | `/eg-security-guide` | Threat model findings, RBAC, TLS hardening |
 | `/eg-production-guide` | Deployment modes, performance tuning, operations |
 
+## Envoy AI Gateway Adopter Skills
+
+Envoy AI Gateway extends Envoy Gateway to provide a unified API gateway for generative AI services (OpenAI, Anthropic, AWS Bedrock, Azure OpenAI, GCP Vertex AI, Cohere, etc.).
+
+### Atomic Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `/eai-install` | Install Envoy AI Gateway and Envoy Gateway with AI integration |
+| `/eai-route` | Create AIGatewayRoute with model-based routing |
+| `/eai-backend` | Create AIServiceBackend and Backend for an AI provider |
+| `/eai-auth` | Configure BackendSecurityPolicy for provider authentication |
+
+### Reference Skills
+
+| Skill | Topic |
+|-------|-------|
+| `/eai-fundamentals` | CRDs, API schemas, resource hierarchy, provider auth types |
+
+### Orchestrator Skills
+
+| Skill | Use Case |
+|-------|----------|
+| `/eai-orchestrator` | **Start here** — interviews you and composes eai-install, eai-route, eai-backend, eai-auth |
+
+### Installation
+
+```bash
+# Install AI Gateway adopter skills
+/path/to/envoy-skills/install.sh ai-gateway/adopters
+
+# Or copy manually
+cp -r /path/to/envoy-skills/ai-gateway/adopters/skills/* .claude/skills/
+```
+
 ## Knowledge Sources
 
 These skills are built from:
@@ -100,11 +135,13 @@ These skills are built from:
 - [Kubernetes Gateway API specification](https://gateway-api.sigs.k8s.io/)
 - [envoyproxy/gateway](https://github.com/envoyproxy/gateway) source code
 - [envoyproxy/envoy](https://github.com/envoyproxy/envoy) source code
+- [envoyproxy/ai-gateway](https://github.com/envoyproxy/ai-gateway) source code
+- [Envoy AI Gateway documentation](https://aigateway.envoyproxy.io/docs/)
 - Community discussions, Q&A, and real-world deployment patterns
 
-## Target Version
+## Target Versions
 
-Skills currently target **Envoy Gateway v1.7.0** (Gateway API v1.4.1). Version information is centralized in `versions.yaml`.
+Skills currently target **Envoy Gateway v1.7.0** (Gateway API v1.4.1) and **Envoy AI Gateway v0.5.0**. Version information is centralized in `versions.yaml`.
 
 ## Testing
 

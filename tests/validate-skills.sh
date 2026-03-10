@@ -27,6 +27,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_DIRS=(
   "${REPO_ROOT}/gateway/adopters/skills"
   "${REPO_ROOT}/gateway/contributors/skills"
+  "${REPO_ROOT}/ai-gateway/adopters/skills"
 )
 
 # --- Read latest_stable from versions.yaml ---
@@ -165,6 +166,22 @@ for filepath in "${skill_files[@]}"; do
           warns+=("Found EG version ${matched_version} (latest_stable is ${LATEST_STABLE}): $(echo "$match_line" | sed 's/^[[:space:]]*//')")
         fi
       done < <(grep -nE 'gateway-helm.*\-\-version v[0-9]|default:.*v[0-9]+\.[0-9]+\.[0-9]+' "$filepath" 2>/dev/null || true)
+    fi
+  fi
+
+  # --- Check 8: AI Gateway skills - version check uses envoy_ai_gateway latest_stable ---
+  if [[ "$relative_path" == ai-gateway/* ]]; then
+    AIGW_LATEST=""
+    if [[ -f "$VERSIONS_FILE" ]]; then
+      AIGW_LATEST="$(grep -A 1 'envoy_ai_gateway:' "$VERSIONS_FILE" | grep 'latest_stable:' | head -1 | sed -E 's/.*latest_stable:[[:space:]]*"?([^"]*)"?.*/\1/' | tr -d '[:space:]')"
+    fi
+    if [[ -n "$AIGW_LATEST" ]]; then
+      while IFS= read -r match_line; do
+        matched_version="$(echo "$match_line" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+        if [[ -n "$matched_version" ]] && [[ "$matched_version" != "$AIGW_LATEST" ]]; then
+          warns+=("Found AI Gateway version ${matched_version} (latest_stable is ${AIGW_LATEST}): $(echo "$match_line" | sed 's/^[[:space:]]*//')")
+        fi
+      done < <(grep -nE 'ai-gateway-helm.*\-\-version v[0-9]|ai-gateway-crds-helm.*\-\-version v[0-9]|v0\.[0-9]+\.[0-9]+' "$filepath" 2>/dev/null || true)
     fi
   fi
 

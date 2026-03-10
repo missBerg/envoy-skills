@@ -1,0 +1,25 @@
+{
+  "name": "envoy-ai-gateway-adopters",
+  "version": "1.0.0",
+  "description": "Skills for developers deploying and configuring Envoy AI Gateway as a Kubernetes-native gateway for generative AI services. Covers installation, routing, backends, provider authentication, and observability.",
+  "author": {
+    "name": "Envoy Community",
+    "url": "https://github.com/envoyproxy/ai-gateway"
+  },
+  "homepage": "https://aigateway.envoyproxy.io/",
+  "repository": "https://github.com/envoyproxy/ai-gateway",
+  "license": "Apache-2.0",
+  "keywords": [
+    "envoy",
+    "envoy-ai-gateway",
+    "ai-gateway",
+    "kubernetes",
+    "gateway-api",
+    "llm",
+    "openai",
+    "anthropic",
+    "aws-bedrock",
+    "azure-openai",
+    "gcp-vertex"
+  ]
+}
