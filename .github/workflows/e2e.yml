@@ -87,9 +87,9 @@ jobs:
 
       - name: Wait for Gateway to be Programmed
         run: |
-          echo "Waiting for test-gateway to be Programmed (timeout: 120s)..."
+          echo "Waiting for test-gateway to be Programmed (timeout: 180s)..."
           ELAPSED=0
-          TIMEOUT=120
+          TIMEOUT=180
           while [[ $ELAPSED -lt $TIMEOUT ]]; do
             STATUS="$(kubectl get gateway test-gateway -n default \
               -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null || echo "")"
@@ -101,9 +101,11 @@ jobs:
             ELAPSED=$((ELAPSED + 5))
             echo "  Waiting... (${ELAPSED}s/${TIMEOUT}s)"
           done
-          echo "Warning: Gateway not yet Programmed after ${TIMEOUT}s"
+          echo "Error: Gateway not Programmed after ${TIMEOUT}s"
           kubectl get gateway -n default -o wide || true
           kubectl get pods -n envoy-gateway-system || true
+          kubectl describe gateway test-gateway -n default || true
+          exit 1
 
       - name: Run core E2E tests
         run: tests/e2e/test-core.sh
