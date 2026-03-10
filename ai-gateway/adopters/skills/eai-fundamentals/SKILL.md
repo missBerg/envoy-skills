@@ -23,9 +23,9 @@ GatewayClass (Gateway API)
 | CRD | Purpose |
 |-----|---------|
 | **AIGatewayRoute** | Binds AI backends to a Gateway. Defines routing rules (header matches, e.g. `x-ai-eg-model`), backend refs, timeouts, and optional LLM cost capture. Generates HTTPRoute and HTTPRouteFilter under the hood. |
-| **AIServiceBackend** | Describes a single AI backend: its API schema (OpenAI, Anthropic, AWSBedrock, etc.) and the Envoy Gateway Backend it attaches to. |
-| **BackendSecurityPolicy** | Backend authentication: API key, AWS credentials, Azure credentials, GCP credentials, Anthropic API key. Attaches to AIServiceBackend or InferencePool. |
-| **GatewayConfig** | Gateway-scoped config (extProc resources, endpoint prefixes). Referenced via annotation on Gateway. |
+| **AIServiceBackend** | Describes a single AI backend: its API schema and the Envoy Gateway Backend it attaches to. **backendRef must be a Backend** (gateway.envoyproxy.io); it cannot reference a Kubernetes Service directly. Use a Backend with FQDN endpoints (e.g., to a K8s service DNS) for in-cluster backends. |
+| **BackendSecurityPolicy** | Backend authentication: API key, AWS credentials, Azure credentials, GCP credentials, Anthropic API key. Attaches to AIServiceBackend or InferencePool. **Only one BackendSecurityPolicy can target a given AIServiceBackend or InferencePool**; multiple policies cause reconciliation failure. |
+| **GatewayConfig** | Gateway-scoped ExtProc config (resources, env vars). Reference via annotation `aigateway.envoyproxy.io/gateway-config: <name>` on the Gateway. Same namespace as Gateway. |
 | **MCPRoute** | Model Context Protocol routing for MCP tools. |
 | **QuotaPolicy** | Rate limiting and quota management. |
 
@@ -79,10 +79,16 @@ Supported values (from ai-gateway codebase):
 - AIServiceBackend and Backend often share the same name for clarity
 - BackendSecurityPolicy names typically indicate provider: `my-backend-openai-apikey`
 
+## Implementation Notes
+
+- **AIGatewayRoute** generates an HTTPRoute (same name) and HTTPRouteFilters (host rewrite, 404 fallback). The AI Gateway controller uses the Envoy Gateway Extension Server to fine-tune xDS.
+- **ExtProc sidecar**: AI Gateway injects an External Processor as a sidecar in the Envoy Proxy Pod. It reads a filter config Secret, performs request/response transformation, and injects provider credentials. Model name is extracted from the request body and set in `x-ai-eg-model` for routing.
+
 ## Checklist
 
-- [ ] Understand AIGatewayRoute → AIServiceBackend → Backend chain
+- [ ] Understand AIGatewayRoute → AIServiceBackend → Backend chain (Backend required, not K8s Service)
 - [ ] Know which schema.name matches your provider
+- [ ] At most one BackendSecurityPolicy per AIServiceBackend or InferencePool
 - [ ] BackendSecurityPolicy required for cloud providers (OpenAI, Anthropic, AWS, Azure, GCP)
 - [ ] ClientTrafficPolicy with bufferLimit for AI workloads
 - [ ] BackendTLSPolicy for HTTPS backends (hostname validation)

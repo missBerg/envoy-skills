@@ -16,7 +16,7 @@ arguments:
     required: true
 ---
 
-Create an AIGatewayRoute that attaches AI service backends to a Gateway. The route uses rules with matches (typically on `x-ai-eg-model` header) and backendRefs to route traffic. AI Gateway generates an HTTPRoute and HTTPRouteFilter from this.
+Create an AIGatewayRoute that attaches AI service backends to a Gateway. The route uses rules with matches (typically on `x-ai-eg-model` header) and backendRefs to route traffic. The AI Gateway ExtProc extracts the model name from the request body and injects it into `x-ai-eg-model` before routing—clients do not need to set this header. AI Gateway generates an HTTPRoute (same name) and HTTPRouteFilters (host rewrite, 404 fallback) from this.
 
 ## Instructions
 
@@ -135,7 +135,7 @@ backendRefs:
 
 ### Step 7: InferencePool (self-hosted models)
 
-For InferencePool backends (Gateway API extension):
+For InferencePool backends (Gateway API Inference Extension; requires addon):
 
 ```yaml
 backendRefs:
@@ -144,7 +144,7 @@ backendRefs:
     kind: InferencePool
 ```
 
-Only one InferencePool per rule; cannot mix with AIServiceBackend in the same rule.
+**Constraints**: Only one InferencePool per rule; cannot mix InferencePool with AIServiceBackend in the same rule. Cross-namespace references require ReferenceGrant in the target namespace.
 
 ## Checklist
 

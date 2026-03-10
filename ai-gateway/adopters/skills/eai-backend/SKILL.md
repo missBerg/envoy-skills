@@ -16,7 +16,7 @@ arguments:
     required: false
 ---
 
-Create an AIServiceBackend and the corresponding Envoy Gateway Backend resource. The AIServiceBackend defines the API schema (OpenAI, Anthropic, AWS Bedrock, etc.) and attaches to a Backend that specifies the endpoint (FQDN + port).
+Create an AIServiceBackend and the corresponding Envoy Gateway Backend resource. The AIServiceBackend defines the API schema (OpenAI, Anthropic, AWS Bedrock, etc.) and **must** reference an Envoy Gateway Backend via `backendRef`. It cannot reference a Kubernetes Service directly—use a Backend with FQDN endpoints (e.g., `my-svc.default.svc.cluster.local`) for in-cluster targets.
 
 ## Instructions
 
@@ -87,9 +87,9 @@ spec:
 | GCPAnthropic | {region}-aiplatform.googleapis.com | Anthropic on Vertex AI |
 | AWSAnthropic | bedrock-runtime.us-east-1.amazonaws.com | Anthropic on Bedrock |
 
-### Step 5: In-cluster backend (Kubernetes Service)
+### Step 5: In-cluster backend (Kubernetes Service via Backend)
 
-For a self-hosted model served by a Kubernetes Service:
+For a self-hosted model served by a Kubernetes Service, create a Backend with FQDN endpoints pointing to the service DNS. AIServiceBackend always references Backend, never Service directly:
 
 ```yaml
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -156,7 +156,8 @@ spec:
 
 ## Checklist
 
-- [ ] Backend created with correct hostname and port
+- [ ] Backend created first; AIServiceBackend.backendRef references it (not K8s Service)
+- [ ] Backend hostname and port correct
 - [ ] AIServiceBackend schema matches provider API
 - [ ] BackendTLSPolicy for HTTPS external endpoints
 - [ ] BackendSecurityPolicy attached for cloud provider auth (see `/eai-auth`)

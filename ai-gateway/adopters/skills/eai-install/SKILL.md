@@ -130,6 +130,37 @@ extProc:
       memory: 512Mi
 ```
 
+For **per-Gateway ExtProc customization** (resources, env vars), use GatewayConfig and annotate the Gateway:
+
+```yaml
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: GatewayConfig
+metadata:
+  name: my-gateway-config
+  namespace: default  # Same as Gateway
+spec:
+  extProc:
+    kubernetes:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+---
+# Annotate your Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+  namespace: default
+  annotations:
+    aigateway.envoyproxy.io/gateway-config: my-gateway-config
+spec:
+  # ...
+```
+
 Install with production values:
 
 ```bash

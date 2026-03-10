@@ -10,7 +10,7 @@ arguments:
     required: true
 ---
 
-Configure authentication for AI backends using BackendSecurityPolicy. This policy attaches to AIServiceBackend (or InferencePool) and injects credentials when the gateway forwards requests to the provider.
+Configure authentication for AI backends using BackendSecurityPolicy. This policy attaches to AIServiceBackend or InferencePool and injects credentials when the gateway forwards requests to the provider. **Only one BackendSecurityPolicy can target a given AIServiceBackend or InferencePool**; multiple policies cause reconciliation failure.
 
 ## Instructions
 
@@ -203,9 +203,9 @@ spec:
         serviceAccountName: my-sa@my-project.iam.gserviceaccount.com
 ```
 
-### Step 8: Multiple backends
+### Step 8: Multiple backends (one policy, many targets)
 
-One BackendSecurityPolicy can target multiple AIServiceBackends:
+One BackendSecurityPolicy can target multiple AIServiceBackends (or InferencePools). Each target can have at most one policy:
 
 ```yaml
 spec:
@@ -223,9 +223,27 @@ spec:
       namespace: default
 ```
 
+### Step 9: InferencePool target
+
+For InferencePool backends (Gateway API Inference Extension):
+
+```yaml
+spec:
+  targetRefs:
+    - group: inference.networking.k8s.io
+      kind: InferencePool
+      name: my-inference-pool
+  type: APIKey
+  apiKey:
+    secretRef:
+      name: inference-pool-secret
+      namespace: default
+```
+
 ## Checklist
 
-- [ ] BackendSecurityPolicy targetRefs point to correct AIServiceBackend(s)
+- [ ] At most one BackendSecurityPolicy per AIServiceBackend or InferencePool
+- [ ] BackendSecurityPolicy targetRefs point to correct AIServiceBackend(s) or InferencePool(s)
 - [ ] Only one auth type per policy (no mixing APIKey with AWSCredentials)
 - [ ] Secret created with correct key (apiKey, client-secret, credentials, service_account.json)
 - [ ] For AWS: region specified; IRSA/Pod Identity preferred for Kubernetes

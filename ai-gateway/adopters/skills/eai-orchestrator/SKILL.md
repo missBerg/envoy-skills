@@ -31,8 +31,8 @@ Before generating configuration, ask:
 1. **If fresh install**: Run `/eai-install` with user's version/namespace preferences.
 2. **Gateway + ClientTrafficPolicy**: Ensure Gateway exists and has ClientTrafficPolicy with `bufferLimit: 50Mi`.
 3. **For each provider**:
-   - Run `/eai-backend` with BackendName, Schema, Hostname, Port.
-   - Run `/eai-auth` with PolicyType and AIServiceBackendName; create Secret if API key.
+   - Run `/eai-backend` with BackendName, Schema, Hostname, Port. (AIServiceBackend must reference Backend, not K8s Service.)
+   - Run `/eai-auth` with PolicyType and AIServiceBackendName; create Secret if API key. At most one BackendSecurityPolicy per backend.
    - Add BackendTLSPolicy for HTTPS backends.
 4. **Route**: Run `/eai-route` with GatewayName, BackendNames, and optional ModelHeader for each rule.
 
@@ -60,5 +60,6 @@ Before generating configuration, ask:
 - [ ] Install steps included if needed
 - [ ] ClientTrafficPolicy with bufferLimit on Gateway
 - [ ] Each provider has Backend + AIServiceBackend + BackendSecurityPolicy + BackendTLSPolicy (for HTTPS)
+- [ ] At most one BackendSecurityPolicy per AIServiceBackend (or InferencePool)
 - [ ] AIGatewayRoute rules match user's routing intent
 - [ ] Secrets created for API keys (never hardcode keys in YAML)
