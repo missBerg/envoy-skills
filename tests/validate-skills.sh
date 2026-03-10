@@ -29,6 +29,7 @@ SKILLS_DIRS=(
   "${REPO_ROOT}/gateway/contributors/skills"
   "${REPO_ROOT}/ai-gateway/adopters/skills"
   "${REPO_ROOT}/ai-gateway/contributors/skills"
+  "${REPO_ROOT}/shared/contributors/skills"
 )
 
 # --- Read latest_stable from versions.yaml ---

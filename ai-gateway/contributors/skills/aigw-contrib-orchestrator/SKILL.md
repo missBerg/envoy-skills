@@ -145,6 +145,11 @@ git diff
 | `aigw-contrib-add-api` | Atomic | Add or modify CRD API types |
 | `aigw-contrib-add-translator` | Atomic | Add a new LLM provider translator |
 | `aigw-contrib-e2e` | Atomic | Write end-to-end tests |
+| `k8s-controller-reconcile` | Shared | Idempotent reconciliation, event handling, requeue semantics |
+| `k8s-crd-lifecycle` | Shared | CRD types, kubebuilder markers, CEL validation, code generation |
+| `k8s-controller-testing` | Shared | envtest, CEL testing, integration patterns, goroutine leak detection |
+| `k8s-controller-perf` | Shared | Field indexers, predicate filters, cache optimization, metrics |
+| `k8s-controller-ops` | Shared | Leader election, RBAC, finalizers, SSA, credential rotation |
 
 ## Common Workflows Composed
 
