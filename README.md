@@ -16,6 +16,9 @@ npx skills add missBerg/envoy-skills --list
 # Install a specific skill
 npx skills add missBerg/envoy-skills --skill eg-install
 
+# Install AI Gateway adopter skills
+npx skills add missBerg/envoy-skills --skill aigw-install
+
 # Install to a specific agent
 npx skills add missBerg/envoy-skills -a cursor
 ```
@@ -24,13 +27,26 @@ npx skills add missBerg/envoy-skills -a cursor
 
 ```bash
 # From within your project directory
-/path/to/envoy-skills/install.sh gateway/adopters
+/path/to/envoy-skills/install.sh gateway/adopters      # Envoy Gateway adopters
+/path/to/envoy-skills/install.sh ai-gateway/adopters   # Envoy AI Gateway adopters
+/path/to/envoy-skills/install.sh gateway/contributors  # Envoy Gateway contributors
+/path/to/envoy-skills/install.sh ai-gateway/contributors  # Envoy AI Gateway contributors
+/path/to/envoy-skills/install.sh shared/contributors    # Shared controller skills
 ```
 
 ### Manual
 
 ```bash
+# Envoy Gateway adopters
 cp -r /path/to/envoy-skills/gateway/adopters/skills/* .claude/skills/
+
+# Envoy AI Gateway adopters
+cp -r /path/to/envoy-skills/ai-gateway/adopters/skills/* .claude/skills/
+
+# Contributor skill sets (gateway, ai-gateway, or shared)
+cp -r /path/to/envoy-skills/gateway/contributors/skills/* .claude/skills/
+cp -r /path/to/envoy-skills/ai-gateway/contributors/skills/* .claude/skills/
+cp -r /path/to/envoy-skills/shared/contributors/skills/* .claude/skills/
 ```
 
 ## Projects
@@ -100,22 +116,22 @@ Envoy AI Gateway extends Envoy Gateway to provide a unified API gateway for gene
 
 | Skill | Purpose |
 |-------|---------|
-| `/eai-install` | Install Envoy AI Gateway and Envoy Gateway with AI integration |
-| `/eai-route` | Create AIGatewayRoute with model-based routing |
-| `/eai-backend` | Create AIServiceBackend and Backend for an AI provider |
-| `/eai-auth` | Configure BackendSecurityPolicy for provider authentication |
+| `/aigw-install` | Install Envoy AI Gateway and Envoy Gateway with AI integration |
+| `/aigw-route` | Create AIGatewayRoute with model-based routing |
+| `/aigw-backend` | Create AIServiceBackend and Backend for an AI provider |
+| `/aigw-auth` | Configure BackendSecurityPolicy for provider authentication |
 
 ### Reference Skills
 
 | Skill | Topic |
 |-------|-------|
-| `/eai-fundamentals` | CRDs, API schemas, resource hierarchy, provider auth types |
+| `/aigw-fundamentals` | CRDs, API schemas, resource hierarchy, provider auth types |
 
 ### Orchestrator Skills
 
 | Skill | Use Case |
 |-------|----------|
-| `/eai-orchestrator` | **Start here** — interviews you and composes eai-install, eai-route, eai-backend, eai-auth |
+| `/aigw-orchestrator` | **Start here** — interviews you and composes aigw-install, aigw-route, aigw-backend, aigw-auth |
 
 ### Installation
 
@@ -126,6 +142,49 @@ Envoy AI Gateway extends Envoy Gateway to provide a unified API gateway for gene
 # Or copy manually
 cp -r /path/to/envoy-skills/ai-gateway/adopters/skills/* .claude/skills/
 ```
+
+## Envoy Gateway Contributor Skills
+
+For developers contributing to the [envoyproxy/gateway](https://github.com/envoyproxy/gateway) codebase.
+
+| Skill | Purpose |
+|-------|---------|
+| `/eg-contrib-orchestrator` | **Start here** — interviews you and guides you through contributor workflows |
+| `/eg-contrib-add-api` | Add new Gateway API or Envoy Gateway CRD support |
+| `/eg-contrib-translate` | Implement or extend xDS translation logic |
+| `/eg-contrib-architecture` | Codebase structure, control plane flow, extension points |
+| `/eg-contrib-envoy-internals` | Envoy configuration, bootstrap, extension mechanisms |
+| `/eg-contrib-testing` | Unit tests, integration tests, test patterns |
+| `/eg-contrib-e2e` | End-to-end tests in kind |
+| `/eg-contrib-pr-guide` | PR process, reviews, CI |
+
+## Envoy AI Gateway Contributor Skills
+
+For developers contributing to the [envoyproxy/ai-gateway](https://github.com/envoyproxy/ai-gateway) codebase.
+
+| Skill | Purpose |
+|-------|---------|
+| `/aigw-contrib-orchestrator` | **Start here** — interviews you and guides you through contributor workflows |
+| `/aigw-contrib-add-api` | Add new AI Gateway CRD support |
+| `/aigw-contrib-add-translator` | Add support for a new LLM provider |
+| `/aigw-contrib-architecture` | Codebase structure, ExtProc flow |
+| `/aigw-contrib-extproc-internals` | ExtProc protocol, backend communication |
+| `/aigw-contrib-testing` | Unit tests, integration tests |
+| `/aigw-contrib-e2e` | End-to-end tests |
+| `/aigw-contrib-pr-guide` | PR process, reviews, CI |
+| `/aigw-contrib-go-style` | Go style guide, conventions |
+
+## Shared Contributor Skills
+
+For developers contributing to any Envoy control plane (Gateway, AI Gateway). Kubernetes controller patterns shared across projects.
+
+| Skill | Purpose |
+|-------|---------|
+| `/k8s-controller-reconcile` | Reconcile loops, finalizers, status updates |
+| `/k8s-controller-testing` | Controller unit testing patterns |
+| `/k8s-controller-perf` | Field indexers, predicates, cache optimization |
+| `/k8s-controller-ops` | Leader election, graceful shutdown |
+| `/k8s-crd-lifecycle` | CRD versioning, migration, deprecation |
 
 ## Knowledge Sources
 
