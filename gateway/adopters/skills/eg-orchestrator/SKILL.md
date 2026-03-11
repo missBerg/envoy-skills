@@ -16,6 +16,7 @@ Before generating any configuration, ask the user these questions. You may skip 
 ### Questions
 
 1. **Use case**: What is your primary use case?
+   - **Migrating from ingress-nginx** (moving to Envoy Gateway from the retired ingress-nginx controller)
    - Web application ingress (serve a website or SPA behind HTTPS)
    - API gateway (protect and manage backend APIs)
    - Multi-tenant SaaS (isolated routing per tenant or namespace)
@@ -68,6 +69,7 @@ If the use case clearly maps to a specialized agent, delegate the entire workflo
 
 | Use case | Agent |
 |----------|-------|
+| Migrating from ingress-nginx | `eg-nginx-migrate-orchestrator` |
 | Web application ingress | `eg-webapp` |
 | API gateway | `eg-api-gateway` |
 | Multi-tenant SaaS | `eg-multi-tenant` |

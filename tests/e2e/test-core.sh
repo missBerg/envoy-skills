@@ -211,13 +211,21 @@ test_http_connectivity() {
   local local_port=19080
 
   # Find the Envoy service for test-gateway
+  # Try gateway.envoyproxy.io/owning-gateway-name first, then gateway.networking.k8s.io/gateway-name (GEP-1762)
   local envoy_svc
   envoy_svc="$(kubectl get svc -n "${eg_ns}" \
     -l gateway.envoyproxy.io/owning-gateway-name=test-gateway \
     -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")"
+  if [[ -z "$envoy_svc" ]]; then
+    envoy_svc="$(kubectl get svc -n "${eg_ns}" \
+      -l gateway.networking.k8s.io/gateway-name=test-gateway \
+      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")"
+  fi
 
   if [[ -z "$envoy_svc" ]]; then
     echo -e "  ${RED}Could not find Envoy service for test-gateway${NC}"
+    echo -e "  ${YELLOW}Available services:${NC}"
+    kubectl get svc -n "${eg_ns}" -o wide 2>/dev/null || true
     return 1
   fi
 
