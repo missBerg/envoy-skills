@@ -14,9 +14,21 @@ envoy-skills/
 │   │   │   └── plugin.json    # Plugin metadata
 │   │   └── skills/            # All skills (atomic + orchestrators + guides)
 │   │       └── <name>/SKILL.md
-│   └── contributors/          # For EG contributors (planned)
+│   └── contributors/         # For EG contributors
+│       └── skills/
+│           └── eg-contrib-<name>/SKILL.md
+├── ai-gateway/                # Envoy AI Gateway skills
+│   ├── adopters/
+│   │   └── skills/
+│   │       └── aigw-<name>/SKILL.md
+│   └── contributors/
+│       └── skills/
+│           └── aigw-contrib-<name>/SKILL.md
 ├── proxy/                     # Envoy Proxy skills (planned)
-├── ai-gateway/                # Envoy AI Gateway skills (planned)
+├── shared/                    # Skills shared across projects
+│   └── contributors/
+│       └── skills/
+│           └── k8s-<name>/SKILL.md
 ├── AGENTS.md                  # This file
 ├── CLAUDE.md                  # Project context
 ├── README.md                  # User-facing documentation
@@ -27,9 +39,11 @@ envoy-skills/
 ## Skill Naming Conventions
 
 - `eg-*` — Envoy Gateway adopter skills
-- `egc-*` — Envoy Gateway contributor skills (future)
+- `eg-contrib-*` — Envoy Gateway contributor skills
+- `aigw-*` — Envoy AI Gateway adopter skills
+- `aigw-contrib-*` — Envoy AI Gateway contributor skills
+- `k8s-*` — Shared Kubernetes controller skills (contributors)
 - `ep-*` — Envoy Proxy skills (future)
-- `eai-*` — Envoy AI Gateway skills (future)
 
 ## Skill Categories
 
@@ -58,15 +72,20 @@ Required frontmatter: `name` and `description` only. The `name` must match the p
 
 ## Adding a New Skill
 
-1. Create `gateway/adopters/skills/<name>/SKILL.md`
-2. Add YAML frontmatter with `name` and `description`
+1. Create the skill file in the appropriate directory:
+   - `gateway/adopters/skills/<name>/SKILL.md` — EG adopter
+   - `gateway/contributors/skills/<name>/SKILL.md` — EG contributor
+   - `ai-gateway/adopters/skills/<name>/SKILL.md` — AI Gateway adopter
+   - `ai-gateway/contributors/skills/<name>/SKILL.md` — AI Gateway contributor
+   - `shared/contributors/skills/<name>/SKILL.md` — Shared controller skills
+2. Add YAML frontmatter with `name` and `description` (name must match parent directory)
 3. Write the skill body (keep under 500 lines; use references/ for longer content)
-4. Verify correct apiVersions: `gateway.networking.k8s.io/v1` for Gateway API, `gateway.envoyproxy.io/v1alpha1` for EG CRDs
-5. Use the EG version from `versions.yaml` (currently v1.7.0) — never hardcode without checking
+4. For Gateway API skills: verify correct apiVersions (`gateway.networking.k8s.io/v1`, `gateway.envoyproxy.io/v1alpha1`)
+5. Use versions from `versions.yaml` — never hardcode without checking
 6. Include TODO comments for user-customizable values
 7. End with a validation checklist
 8. Run `tests/validate-skills.sh` to check format and version consistency
-9. Run `tests/extract-yaml.sh` on your skill to verify YAML extracts correctly
+9. Run `tests/extract-yaml.sh` on your skill to verify YAML extracts correctly (for skills with YAML blocks)
 
 ## Testing
 

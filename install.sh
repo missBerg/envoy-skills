@@ -7,8 +7,12 @@ set -euo pipefail
 #   ./install.sh <skill-set-path> [target-project-path]
 #
 # Examples:
-#   ./install.sh gateway/adopters                    # Install into current directory
-#   ./install.sh gateway/adopters /path/to/my-project  # Install into specific project
+#   ./install.sh gateway/adopters                    # Envoy Gateway adopters
+#   ./install.sh ai-gateway/adopters                 # Envoy AI Gateway adopters
+#   ./install.sh gateway/contributors                # Envoy Gateway contributors
+#   ./install.sh ai-gateway/contributors              # Envoy AI Gateway contributors
+#   ./install.sh shared/contributors                 # Shared controller skills
+#   ./install.sh gateway/adopters /path/to/project   # Install into specific project
 #
 # For cross-agent installation, use: npx skills add missBerg/envoy-skills
 
@@ -23,12 +27,14 @@ if [[ ! -d "${SKILL_SET_PATH}" ]]; then
   echo "Error: Skill set not found at ${SKILL_SET_PATH}"
   echo ""
   echo "Available skill sets:"
-  echo "  gateway/adopters     Envoy Gateway skills for adopters"
-  echo "  ai-gateway/adopters  Envoy AI Gateway skills for adopters"
+  echo "  gateway/adopters      Envoy Gateway skills for adopters"
+  echo "  gateway/contributors  Envoy Gateway skills for contributors"
+  echo "  ai-gateway/adopters   Envoy AI Gateway skills for adopters"
+  echo "  ai-gateway/contributors  Envoy AI Gateway skills for contributors"
+  echo "  shared/contributors   Shared Kubernetes controller skills for contributors"
   echo ""
   echo "Planned:"
-  echo "  gateway/contributors Envoy Gateway skills for contributors"
-  echo "  proxy/adopters       Envoy Proxy skills"
+  echo "  proxy/adopters        Envoy Proxy skills"
   exit 1
 fi
 
@@ -55,14 +61,35 @@ done
 echo ""
 echo "Installed ${INSTALLED} skills from ${SKILL_SET} into ${TARGET}/.claude/skills/"
 echo ""
-if [[ "${SKILL_SET}" == "ai-gateway/adopters" ]]; then
-  echo "Quick start:"
-  echo "  /eai-orchestrator  — guided setup (start here)"
-  echo "  /eai-install       — install Envoy AI Gateway"
-  echo "  /eai-fundamentals  — learn the resource model"
-else
-  echo "Quick start:"
-  echo "  /eg-orchestrator  — guided setup (start here)"
-  echo "  /eg-install       — install Envoy Gateway"
-  echo "  /eg-fundamentals  — learn the resource model"
-fi
+case "${SKILL_SET}" in
+  ai-gateway/adopters)
+    echo "Quick start:"
+    echo "  /aigw-orchestrator  — guided setup (start here)"
+    echo "  /aigw-install       — install Envoy AI Gateway"
+    echo "  /aigw-fundamentals  — learn the resource model"
+    ;;
+  gateway/contributors)
+    echo "Quick start:"
+    echo "  /eg-contrib-orchestrator  — guided setup (start here)"
+    echo "  /eg-contrib-add-api       — add new API support"
+    echo "  /eg-contrib-architecture   — codebase structure"
+    ;;
+  ai-gateway/contributors)
+    echo "Quick start:"
+    echo "  /aigw-contrib-orchestrator  — guided setup (start here)"
+    echo "  /aigw-contrib-add-translator — add new LLM provider"
+    echo "  /aigw-contrib-architecture   — codebase structure"
+    ;;
+  shared/contributors)
+    echo "Quick start:"
+    echo "  /k8s-controller-reconcile  — reconcile loops, finalizers"
+    echo "  /k8s-controller-testing    — unit testing patterns"
+    echo "  /k8s-controller-perf       — performance tuning"
+    ;;
+  *)
+    echo "Quick start:"
+    echo "  /eg-orchestrator  — guided setup (start here)"
+    echo "  /eg-install       — install Envoy Gateway"
+    echo "  /eg-fundamentals  — learn the resource model"
+    ;;
+esac
