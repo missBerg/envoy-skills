@@ -176,15 +176,42 @@ fi
 
 echo ""
 
+# --- Apply EnvoyProxy config for KIND ---
+# KIND has no LoadBalancer provider, so the default LoadBalancer-typed Envoy
+# service never gets an address and Gateway.Programmed stays False. Override
+# to ClusterIP and reach the proxy via `kubectl port-forward`.
+echo -e "${CYAN}Applying EnvoyProxy config (ClusterIP for KIND)...${NC}"
+kubectl apply -f - <<EOF
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: kind-proxy-config
+  namespace: ${EG_NAMESPACE}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: ClusterIP
+EOF
+echo -e "${GREEN}EnvoyProxy config applied.${NC}"
+
+echo ""
+
 # --- Apply GatewayClass ---
 echo -e "${CYAN}Applying default GatewayClass...${NC}"
-kubectl apply -f - <<'EOF'
+kubectl apply -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: eg
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: kind-proxy-config
+    namespace: ${EG_NAMESPACE}
 EOF
 echo -e "${GREEN}GatewayClass applied.${NC}"
 
@@ -287,14 +314,26 @@ EOF
 
 echo ""
 
-# --- Wait for Gateway to be programmed ---
-echo -e "${CYAN}Waiting for Gateway to be programmed...${NC}"
-TIMEOUT=120
+# --- Wait for Envoy pod to roll out and Gateway to be Programmed ---
+echo -e "${CYAN}Waiting for Envoy pod for test-gateway to be Ready...${NC}"
+if kubectl wait --timeout=180s -n "${EG_NAMESPACE}" \
+  pod -l gateway.envoyproxy.io/owning-gateway-name=test-gateway \
+  --for=condition=Ready; then
+  echo -e "${GREEN}Envoy pod is Ready.${NC}"
+else
+  echo -e "${YELLOW}Warning: Envoy pod did not become Ready within 180s.${NC}"
+  kubectl get pods -n "${EG_NAMESPACE}" || true
+fi
+
+echo ""
+
+echo -e "${CYAN}Waiting for Gateway to be Programmed...${NC}"
+TIMEOUT=180
 ELAPSED=0
 while [[ $ELAPSED -lt $TIMEOUT ]]; do
   STATUS="$(kubectl get gateway test-gateway -n default -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null || echo "")"
   if [[ "$STATUS" == "True" ]]; then
-    echo -e "${GREEN}Gateway is programmed.${NC}"
+    echo -e "${GREEN}Gateway is Programmed.${NC}"
     break
   fi
   sleep 5
@@ -303,8 +342,11 @@ while [[ $ELAPSED -lt $TIMEOUT ]]; do
 done
 
 if [[ $ELAPSED -ge $TIMEOUT ]]; then
-  echo -e "${YELLOW}Warning: Gateway did not reach Programmed status within ${TIMEOUT}s.${NC}"
-  echo -e "${YELLOW}It may still be initializing. Check: kubectl get gateway test-gateway -n default${NC}"
+  echo -e "${RED}Error: Gateway did not reach Programmed status within ${TIMEOUT}s.${NC}"
+  echo -e "${RED}Dumping diagnostic info:${NC}"
+  kubectl get gateway test-gateway -n default -o yaml 2>/dev/null || true
+  kubectl get pods -n "${EG_NAMESPACE}" 2>/dev/null || true
+  exit 1
 fi
 
 echo ""

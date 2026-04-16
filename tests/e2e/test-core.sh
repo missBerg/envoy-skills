@@ -27,7 +27,8 @@ EXTRACT_SCRIPT="${REPO_ROOT}/tests/extract-yaml.sh"
 TESTS_RUN=0
 TESTS_PASSED=0
 TESTS_FAILED=0
-TIMEOUT=120
+TIMEOUT=180
+EG_NAMESPACE="envoy-gateway-system"
 
 run_test() {
   local name="$1"
@@ -67,6 +68,27 @@ wait_for() {
   return 1
 }
 
+# Wait for the Envoy pod owned by a Gateway to reach Ready before checking
+# Gateway.Programmed — the condition flips True only after the proxy is up.
+wait_for_envoy_pod_ready() {
+  local gw_name="$1"
+  local timeout="${2:-${TIMEOUT}}"
+  echo -e "  Waiting for Envoy pod (gateway=${gw_name}) to be Ready (timeout: ${timeout}s)"
+  local elapsed=0
+  while [[ $elapsed -lt $timeout ]]; do
+    if kubectl get pod -n "${EG_NAMESPACE}" \
+      -l "gateway.envoyproxy.io/owning-gateway-name=${gw_name}" \
+      -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null \
+      | grep -qw True; then
+      return 0
+    fi
+    sleep 3
+    elapsed=$((elapsed + 3))
+  done
+  echo -e "  ${YELLOW}Envoy pod for ${gw_name} not Ready after ${timeout}s (continuing)${NC}"
+  return 1
+}
+
 # Print diagnostic info for debugging failures
 dump_debug_info() {
   echo -e "  ${YELLOW}--- Debug Info ---${NC}"
@@ -75,7 +97,9 @@ dump_debug_info() {
   echo -e "  ${YELLOW}Gateway conditions:${NC}"
   kubectl get gateway -n default -o jsonpath='{range .items[*]}{.metadata.name}: {.status.conditions[*].type}={.status.conditions[*].status}{"\n"}{end}' 2>/dev/null || true
   echo -e "  ${YELLOW}Envoy pods:${NC}"
-  kubectl get pods -n envoy-gateway-system 2>/dev/null || true
+  kubectl get pods -n "${EG_NAMESPACE}" 2>/dev/null || true
+  echo -e "  ${YELLOW}Envoy services:${NC}"
+  kubectl get svc -n "${EG_NAMESPACE}" 2>/dev/null || true
   echo -e "  ${YELLOW}Events (last 20):${NC}"
   kubectl get events -n default --sort-by='.lastTimestamp' 2>/dev/null | tail -20 || true
   echo -e "  ${YELLOW}--- End Debug ---${NC}"
@@ -155,6 +179,10 @@ spec:
         namespaces:
           from: Same
 EOF
+
+  # Let the Envoy pod roll out before checking Programmed — the condition
+  # only flips True once the proxy and service are up.
+  wait_for_envoy_pod_ready "${gw_name}" || true
 
   # Wait for Programmed status
   wait_for "Gateway '${gw_name}' to be Programmed" \
@@ -265,6 +293,7 @@ test_http_connectivity() {
 # --- Wait for test-gateway from setup-cluster.sh to be ready ---
 # Tests 3 and 4 depend on test-gateway being Programmed
 echo -e "${CYAN}Waiting for setup test-gateway to be Programmed...${NC}"
+wait_for_envoy_pod_ready "test-gateway" || true
 wait_for "test-gateway to be Programmed" \
   '[ "$(kubectl get gateway test-gateway -n default -o jsonpath='"'"'{.status.conditions[?(@.type=="Programmed")].status}'"'"' 2>/dev/null)" = "True" ]' || {
   echo -e "${YELLOW}Warning: test-gateway not Programmed yet. Tests 3 and 4 may fail.${NC}"
