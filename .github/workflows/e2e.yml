@@ -32,6 +32,23 @@ jobs:
           kubectl wait --timeout=5m -n envoy-gateway-system \
             deployment/envoy-gateway --for=condition=Available
 
+          # KIND has no LoadBalancer provider, so the default LoadBalancer-typed
+          # Envoy service never gets an address and Gateway.Programmed stays
+          # False. Override to ClusterIP; traffic still flows via port-forward.
+          kubectl apply -f - <<EOF
+          apiVersion: gateway.envoyproxy.io/v1alpha1
+          kind: EnvoyProxy
+          metadata:
+            name: kind-proxy-config
+            namespace: envoy-gateway-system
+          spec:
+            provider:
+              type: Kubernetes
+              kubernetes:
+                envoyService:
+                  type: ClusterIP
+          EOF
+
           kubectl apply -f - <<EOF
           apiVersion: gateway.networking.k8s.io/v1
           kind: GatewayClass
@@ -39,6 +56,11 @@ jobs:
             name: eg
           spec:
             controllerName: gateway.envoyproxy.io/gatewayclass-controller
+            parametersRef:
+              group: gateway.envoyproxy.io
+              kind: EnvoyProxy
+              name: kind-proxy-config
+              namespace: envoy-gateway-system
           EOF
 
       - name: Deploy test backend
@@ -87,9 +109,14 @@ jobs:
 
       - name: Wait for Gateway to be Programmed
         run: |
-          echo "Waiting for test-gateway to be Programmed (timeout: 120s)..."
+          echo "Waiting for Envoy pod to be Ready (timeout: 180s)..."
+          kubectl wait --timeout=180s -n envoy-gateway-system \
+            pod -l gateway.envoyproxy.io/owning-gateway-name=test-gateway \
+            --for=condition=Ready || true
+
+          echo "Waiting for test-gateway to be Programmed (timeout: 180s)..."
           ELAPSED=0
-          TIMEOUT=120
+          TIMEOUT=180
           while [[ $ELAPSED -lt $TIMEOUT ]]; do
             STATUS="$(kubectl get gateway test-gateway -n default \
               -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null || echo "")"
@@ -101,9 +128,21 @@ jobs:
             ELAPSED=$((ELAPSED + 5))
             echo "  Waiting... (${ELAPSED}s/${TIMEOUT}s)"
           done
-          echo "Warning: Gateway not yet Programmed after ${TIMEOUT}s"
+          echo "Error: Gateway not Programmed after ${TIMEOUT}s"
+          echo "--- Gateway ---"
           kubectl get gateway -n default -o wide || true
+          kubectl describe gateway test-gateway -n default || true
+          echo "--- GatewayClass ---"
+          kubectl describe gatewayclass eg || true
+          echo "--- EnvoyProxy ---"
+          kubectl get envoyproxy -n envoy-gateway-system -o yaml || true
+          echo "--- Envoy pods ---"
           kubectl get pods -n envoy-gateway-system || true
+          echo "--- Envoy services ---"
+          kubectl get svc -n envoy-gateway-system || true
+          echo "--- envoy-gateway logs (last 100) ---"
+          kubectl logs -n envoy-gateway-system deployment/envoy-gateway --tail=100 || true
+          exit 1
 
       - name: Run core E2E tests
         run: tests/e2e/test-core.sh
