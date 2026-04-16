@@ -81,14 +81,14 @@ ACCEPTED:.status.conditions[0].status
 
 All GA Gateway API resources use the `v1` API group:
 
-```yaml
+```text
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass | Gateway | HTTPRoute | GRPCRoute | ReferenceGrant
 ```
 
 Experimental resources use `v1alpha2` or `v1alpha3`:
 
-```yaml
+```text
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute | UDPRoute | TLSRoute
 
@@ -102,7 +102,7 @@ kind: BackendTLSPolicy
 
 All Envoy Gateway extension CRDs use `v1alpha1`:
 
-```yaml
+```text
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: ClientTrafficPolicy | BackendTrafficPolicy | SecurityPolicy
       EnvoyProxy | EnvoyExtensionPolicy | EnvoyPatchPolicy

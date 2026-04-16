@@ -140,11 +140,8 @@ spec:
       sectionName: https          # Target only the HTTPS listener
   tls:
     minVersion: "1.2"             # Minimum TLS 1.2 (prefer 1.3 if clients support it)
-    # TODO: For PCI-DSS, set minVersion to "1.2" and restrict cipherSuites
-    cipherSuites:
-      - TLS_AES_128_GCM_SHA256
-      - TLS_AES_256_GCM_SHA384
-      - TLS_CHACHA20_POLY1305_SHA256
+    # TODO: For PCI-DSS, set minVersion to "1.2" and restrict ciphers
+    ciphers:
       - ECDHE-ECDSA-AES128-GCM-SHA256
       - ECDHE-RSA-AES128-GCM-SHA256
       - ECDHE-ECDSA-AES256-GCM-SHA384
@@ -178,7 +175,7 @@ spec:
     # header injection via underscore-to-hyphen conversion
     withUnderscoresAction: RejectRequest
     # Preserve original path in x-envoy-original-path header for logging
-    preserveXRequestId: true
+    preserveXRequestID: true
   # Enable use_remote_address so Envoy uses the real client IP
   # for access logging, rate limiting, and authorization
   clientIPDetection:

@@ -135,9 +135,8 @@ for yaml_file in "${YAML_FILES[@]}"; do
       # This is likely a schema/structural error -- the YAML itself is wrong
       failed_schema=$((failed_schema + 1))
       fail_schema_list+=("$filename")
-      short_err="$(echo "$output" | head -5 | tr '\n' ' ' | cut -c1-200)"
       echo -e "${RED}FAIL (schema error)${NC}"
-      echo -e "    ${RED}${short_err}${NC}"
+      echo "$output" | sed 's/^/    /'
     fi
   fi
 done

@@ -200,14 +200,16 @@ Use BackendTLSPolicy so Envoy Gateway trusts the Istio CA when connecting to mes
 # First, export the Istio root CA certificate
 kubectl get secret istio-ca-secret -n istio-system -o jsonpath='{.data.ca-cert\.pem}' | base64 -d > istio-root-ca.pem
 
-# Create a ConfigMap with the Istio CA cert
+# Create a ConfigMap with the Istio CA cert in the backend namespace.
+# BackendTLSPolicy.caCertificateRefs is a LocalObjectReference, so the
+# ConfigMap must live in the same namespace as the BackendTLSPolicy.
 kubectl create configmap istio-root-ca \
   --from-file=ca.crt=istio-root-ca.pem \
-  -n gateway-system  # TODO: Replace with gateway namespace
+  -n app-namespace  # TODO: Replace with backend namespace
 ```
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha3
+apiVersion: gateway.networking.k8s.io/v1
 kind: BackendTLSPolicy
 metadata:
   name: mesh-backend-tls
@@ -223,26 +225,7 @@ spec:
       - group: ""
         kind: ConfigMap
         name: istio-root-ca
-        namespace: gateway-system  # Requires ReferenceGrant
     hostname: my-app-service.app-namespace.svc.cluster.local  # TODO: Replace with SPIFFE-compatible hostname
-```
-
-Create a ReferenceGrant to allow cross-namespace CA reference:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: allow-backend-tls-ca-ref
-  namespace: gateway-system  # TODO: Namespace where the ConfigMap lives
-spec:
-  from:
-    - group: gateway.networking.k8s.io
-      kind: BackendTLSPolicy
-      namespace: app-namespace  # TODO: Namespace where the BackendTLSPolicy lives
-  to:
-    - group: ""
-      kind: ConfigMap
 ```
 
 #### Option B: Mesh Identity Participation (ambient mode)
