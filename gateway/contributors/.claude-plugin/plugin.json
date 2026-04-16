@@ -1,0 +1,23 @@
+{
+  "name": "envoy-gateway-contributors",
+  "version": "1.0.0",
+  "description": "Skills for developers contributing to the Envoy Gateway codebase. Covers codebase architecture, xDS translation, adding Gateway API / CRD support, controller patterns, testing, end-to-end tests, and the PR workflow.",
+  "author": {
+    "name": "Envoy Community",
+    "url": "https://github.com/envoyproxy/gateway"
+  },
+  "homepage": "https://gateway.envoyproxy.io/",
+  "repository": "https://github.com/missBerg/envoy-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "envoy",
+    "envoy-gateway",
+    "contributor",
+    "xds",
+    "gateway-api",
+    "kubernetes",
+    "go",
+    "controller-runtime",
+    "testing"
+  ]
+}

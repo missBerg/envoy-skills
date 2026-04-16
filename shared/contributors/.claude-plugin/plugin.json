@@ -1,0 +1,23 @@
+{
+  "name": "envoy-shared-contributors",
+  "version": "1.0.0",
+  "description": "Shared Kubernetes controller skills for developers contributing to any Envoy control plane (Envoy Gateway, Envoy AI Gateway). Covers reconcile loops, finalizers, status updates, controller testing, field indexers and cache optimization, leader election, graceful shutdown, and CRD lifecycle.",
+  "author": {
+    "name": "Envoy Community",
+    "url": "https://github.com/envoyproxy"
+  },
+  "homepage": "https://gateway.envoyproxy.io/",
+  "repository": "https://github.com/missBerg/envoy-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "envoy",
+    "contributor",
+    "kubernetes",
+    "controller-runtime",
+    "crd",
+    "reconcile",
+    "finalizers",
+    "leader-election",
+    "testing"
+  ]
+}

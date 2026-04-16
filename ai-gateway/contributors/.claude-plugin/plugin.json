@@ -1,0 +1,24 @@
+{
+  "name": "envoy-ai-gateway-contributors",
+  "version": "1.0.0",
+  "description": "Skills for developers contributing to the Envoy AI Gateway codebase. Covers codebase architecture, ExtProc internals, adding LLM provider translators and CRDs, controller patterns, testing, end-to-end tests, Go style, and the PR workflow.",
+  "author": {
+    "name": "Envoy Community",
+    "url": "https://github.com/envoyproxy/ai-gateway"
+  },
+  "homepage": "https://aigateway.envoyproxy.io/",
+  "repository": "https://github.com/missBerg/envoy-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "envoy",
+    "envoy-ai-gateway",
+    "ai-gateway",
+    "contributor",
+    "extproc",
+    "llm",
+    "kubernetes",
+    "go",
+    "controller-runtime",
+    "testing"
+  ]
+}

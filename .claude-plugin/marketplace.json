@@ -27,6 +27,36 @@
       "category": "integration",
       "license": "Apache-2.0",
       "strict": false
+    },
+    {
+      "name": "envoy-gateway-contributors",
+      "source": "./gateway/contributors",
+      "description": "Skills for developers contributing to the Envoy Gateway codebase — architecture, xDS translation, CRD support, testing, and PR workflow",
+      "version": "1.0.0",
+      "keywords": ["envoy", "envoy-gateway", "contributor", "xds", "gateway-api", "kubernetes", "go", "controller-runtime", "testing"],
+      "category": "development",
+      "license": "Apache-2.0",
+      "strict": false
+    },
+    {
+      "name": "envoy-ai-gateway-contributors",
+      "source": "./ai-gateway/contributors",
+      "description": "Skills for developers contributing to the Envoy AI Gateway codebase — architecture, ExtProc internals, adding LLM provider translators and CRDs, testing, Go style, and PR workflow",
+      "version": "1.0.0",
+      "keywords": ["envoy", "envoy-ai-gateway", "ai-gateway", "contributor", "extproc", "llm", "kubernetes", "go", "controller-runtime", "testing"],
+      "category": "development",
+      "license": "Apache-2.0",
+      "strict": false
+    },
+    {
+      "name": "envoy-shared-contributors",
+      "source": "./shared/contributors",
+      "description": "Shared Kubernetes controller skills for developers contributing to any Envoy control plane — reconcile loops, finalizers, controller testing, leader election, and CRD lifecycle",
+      "version": "1.0.0",
+      "keywords": ["envoy", "contributor", "kubernetes", "controller-runtime", "crd", "reconcile", "finalizers", "leader-election", "testing"],
+      "category": "development",
+      "license": "Apache-2.0",
+      "strict": false
     }
   ]
 }
